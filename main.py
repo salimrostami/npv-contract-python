@@ -6,12 +6,12 @@ from builder_exact import builder_enpv, builder_risk
 from owner_exact import owner_enpv, owner_risk
 from initialize import set_owner_threshold
 
-num_simulations = 100000
+num_simulations = 500000
 distribution = "uni"
 
 try:
     projects.append(
-        Project("001", -5000, -35000, -5000, 0.1, 1, 10, 0.1, 0, 5000, 100000)
+        Project("001", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 0, 5000, 100000)
     )
 except ValueError as e:
     print(e)

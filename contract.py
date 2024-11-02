@@ -127,21 +127,21 @@ def calc_salary(project, target_b_enpv, nu, R, distribution):
 
 def make_contracts(project: Project, target_b_enpv, distribution):
     counter = 0
-    for nu in [0, 0.5, 0.85, 1]:
+    for nu in np.arange(0, 1.05, 0.05):
         Rmax = round(calc_reward(project, target_b_enpv, nu, 0, distribution), 2)
-        Smax = round(calc_salary(project, target_b_enpv, nu, 0, distribution), 2)
-        R_Smax2 = round(
-            calc_reward(project, target_b_enpv, nu, Smax / 2, distribution), 2
-        )
+        # Smax = round(calc_salary(project, target_b_enpv, nu, 0, distribution), 2)
+        # R_Smax2 = round(
+        #     calc_reward(project, target_b_enpv, nu, Smax / 2, distribution), 2
+        # )
         try:
-            contracts.append(Contract(f"{(counter+1):03}", Rmax, nu, 0))
+            contracts.append(Contract(f"{(counter+1):03}", Rmax, round(nu, 2), 0))
             counter += 1
-            contracts.append(
-                Contract(f"{(counter+1):03}", R_Smax2, nu, round(Smax / 2, 2))
-            )
-            counter += 1
-            contracts.append(Contract(f"{(counter+1):03}", 0, nu, Smax))
-            counter += 1
+            # contracts.append(
+            #     Contract(f"{(counter+1):03}", R_Smax2, nu, round(Smax / 2, 2))
+            # )
+            # counter += 1
+            # contracts.append(Contract(f"{(counter+1):03}", 0, nu, Smax))
+            # counter += 1
         except ValueError as e:
             print(e)
 
