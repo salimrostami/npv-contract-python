@@ -34,6 +34,7 @@ def simulate(
     contract: Contract,
     num_simulations,
     distribution,
+    builder_threshold_u: float,
 ):
     # Validate the distribution argument
     if distribution not in ["uni", "expo"]:
@@ -60,7 +61,7 @@ def simulate(
         owner_npv = calc_owner_npv(project, contract, random_c, random_t)
 
         # Check if NPV is below threshold
-        if builder_npv < project.builder_threshold:
+        if builder_npv < builder_threshold_u:
             counter_builder_low_npv += 1
         # Check if NPV is below threshold
         if owner_npv < project.owner_threshold:
@@ -87,11 +88,9 @@ def simulate(
     )  # low npv probability over simulations
     owner_var = round(np.percentile(owner_npvs, 5) - owner_enpv, 2)  # VaR at 5% level
 
-    return [
-        builder_enpv,
-        builder_risk,
-        builder_var,
-        owner_enpv,
-        owner_risk,
-        owner_var,
-    ]
+    project.sim_results.builder.enpv = builder_enpv
+    project.sim_results.builder.risk = builder_risk
+    project.sim_results.builder.var = builder_var
+    project.sim_results.owner.enpv = owner_enpv
+    project.sim_results.owner.risk = owner_risk
+    project.sim_results.owner.var = owner_var

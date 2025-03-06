@@ -1,44 +1,59 @@
 from project import projects, Project
 from contract import contracts, Contract, make_contracts
 from simulation import simulate
-from report_writer import Report, print_reports, print_header
-from builder_exact import builder_enpv, builder_risk
+from report_writer import print_reports, print_header
+from builder_risk import builder_risk
+from builder_enpv import builder_enpv
 from owner_exact import owner_enpv, owner_risk
 from initialize import set_owner_threshold
+from builder_var import builder_var
 
-num_simulations = 500000
+num_simulations = 1000
 distribution = "uni"
 
 try:
-    projects.append(
-        Project("001", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 0, 5000, 100000)
-    )
+    projects.append(Project("001", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000))
 except ValueError as e:
     print(e)
+
+
+def exact_calculations(
+    proj: Project, cont: Contract, distribution: str, builder_threshold_u: int
+):
+    proj.exact_results.builder.enpv = round(builder_enpv(proj, cont, distribution), 2)
+    proj.exact_results.owner.enpv = round(owner_enpv(proj, cont, distribution), 2)
+    proj.exact_results.builder.risk = round(
+        100 * builder_risk(proj, cont, distribution, builder_threshold_u), 2
+    )
+    proj.exact_results.owner.risk = round(100 * owner_risk(proj, cont, distribution), 2)
+    proj.exact_results.builder.var = round(
+        builder_var(proj, cont, distribution, 0.05) - proj.exact_results.builder.enpv, 2
+    )
+
+
+def update_min_max_total_VaR(proj: Project):
+    total_var = round(proj.sim_results.builder.var + proj.sim_results.owner.var, 0)
+    if total_var > proj.min_total_VaR:
+        proj.min_total_VaR = total_var
+    if total_var < proj.max_total_VaR:
+        proj.max_total_VaR = total_var
 
 
 def main():
     proj: Project
     cont: Contract
-    rep = Report()
     print_header()
-    min_total_VaR = -1000000
-    max_total_VaR = 0
     for proj in projects:
         make_contracts(proj, proj.builder_target_enpv, distribution)
         set_owner_threshold(proj, distribution)
         for cont in contracts:
-            rep.simulation = simulate(proj, cont, num_simulations, distribution)
-            rep.exact_B_ENPV = round(builder_enpv(proj, cont, distribution), 2)
-            rep.exact_B_risk = round(100 * builder_risk(proj, cont, distribution), 2)
-            rep.exact_O_ENPV = round(owner_enpv(proj, cont, distribution), 2)
-            rep.exact_O_risk = round(100 * owner_risk(proj, cont, distribution), 2)
-            print_reports(rep, cont, proj)
-            if round(rep.simulation[2] + rep.simulation[5], 0) > min_total_VaR:
-                min_total_VaR = round(rep.simulation[2] + rep.simulation[5], 0)
-            if round(rep.simulation[2] + rep.simulation[5], 0) < max_total_VaR:
-                max_total_VaR = round(rep.simulation[2] + rep.simulation[5], 0)
-        print(f"Min Total VaR: {min_total_VaR}, Max Total VaR: {max_total_VaR}")
+            simulate(proj, cont, num_simulations, distribution, 0)
+            exact_calculations(proj, cont, distribution, 0)
+            update_min_max_total_VaR(proj)
+            print_reports(cont, proj)
+        print(
+            f"Min Total VaR: {proj.min_total_VaR}, Max Total VaR: {proj.max_total_VaR}\n"
+        )
 
 
 if __name__ == "__main__":

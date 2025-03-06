@@ -22,11 +22,18 @@ def compute_lambert_w(z):
 
 def get_common_interval(interval1, interval2):
     # Find the maximum of the starting points and the minimum of the ending points
-    start = max(interval1[0], interval2[0])
-    end = min(interval1[1], interval2[1])
-
-    # Check if there is a valid intersection
-    if start <= end:
-        return start, end  # Return the intersection min and max
-    else:
+    if (
+        interval1[0] is None
+        or interval1[1] is None
+        or interval2[0] is None
+        or interval2[1] is None
+    ):
         return None, None  # No intersection
+    else:
+        start = max(interval1[0], interval2[0])
+        end = min(interval1[1], interval2[1])
+        # Check if there is a valid intersection
+        if start > end:
+            return None, None  # No intersection
+        else:  # start <= end:
+            return start, end  # Return the intersection min and max
