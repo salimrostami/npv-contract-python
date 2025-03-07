@@ -19,6 +19,7 @@ def print_header():
         "SB_VaR",
         "B_VaR",
         "SO_VaR",
+        "O_VaR",
         "T_VaR",
     ]
     print("\n")
@@ -42,6 +43,7 @@ def print_reports(contract: Contract, project: Project):
         project.sim_results.builder.var,
         project.exact_results.builder.var,
         project.sim_results.owner.var,
-        round(project.sim_results.builder.var + project.sim_results.owner.var, 0),
+        project.exact_results.owner.var,
+        round(project.exact_results.builder.var + project.exact_results.owner.var, 0),
     ]
     print(" ".join(f"{x:<9}" for x in row))

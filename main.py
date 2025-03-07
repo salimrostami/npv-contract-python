@@ -4,11 +4,13 @@ from simulation import simulate
 from report_writer import print_reports, print_header
 from builder_risk import builder_risk
 from builder_enpv import builder_enpv
-from owner_exact import owner_enpv, owner_risk
+from owner_risk import owner_risk
+from owner_enpv import owner_enpv
 from initialize import set_owner_threshold
 from builder_var import builder_var
+from owner_var import owner_var
 
-num_simulations = 1000
+num_simulations = 100000
 distribution = "uni"
 
 try:
@@ -25,14 +27,19 @@ def exact_calculations(
     proj.exact_results.builder.risk = round(
         100 * builder_risk(proj, cont, distribution, builder_threshold_u), 2
     )
-    proj.exact_results.owner.risk = round(100 * owner_risk(proj, cont, distribution), 2)
+    proj.exact_results.owner.risk = round(
+        100 * owner_risk(proj, cont, distribution, proj.owner_threshold), 2
+    )
     proj.exact_results.builder.var = round(
         builder_var(proj, cont, distribution, 0.05) - proj.exact_results.builder.enpv, 2
+    )
+    proj.exact_results.owner.var = round(
+        owner_var(proj, cont, distribution, 0.05) - proj.exact_results.owner.enpv, 2
     )
 
 
 def update_min_max_total_VaR(proj: Project):
-    total_var = round(proj.sim_results.builder.var + proj.sim_results.owner.var, 0)
+    total_var = round(proj.exact_results.builder.var + proj.exact_results.owner.var, 0)
     if total_var > proj.min_total_VaR:
         proj.min_total_VaR = total_var
     if total_var < proj.max_total_VaR:

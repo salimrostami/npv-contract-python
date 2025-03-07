@@ -1,7 +1,7 @@
 from project import Project
 from contract import contracts
 from builder_enpv import builder_enpv
-from owner_exact import owner_enpv
+from owner_enpv import owner_enpv
 
 
 def set_owner_threshold(project: Project, distribution):
