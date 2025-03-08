@@ -10,8 +10,9 @@ from initialize import set_owner_threshold
 from builder_var import builder_var
 from owner_var import owner_var
 
-num_simulations = 100000
+num_simulations = 1000
 distribution = "uni"
+simulation = True
 
 try:
     projects.append(Project("001", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000))
@@ -49,15 +50,15 @@ def update_min_max_total_VaR(proj: Project):
 def main():
     proj: Project
     cont: Contract
-    print_header()
+    print_header(simulation)
     for proj in projects:
         make_contracts(proj, proj.builder_target_enpv, distribution)
         set_owner_threshold(proj, distribution)
         for cont in contracts:
-            simulate(proj, cont, num_simulations, distribution, 0)
+            simulation and simulate(proj, cont, num_simulations, distribution, 0)
             exact_calculations(proj, cont, distribution, 0)
             update_min_max_total_VaR(proj)
-            print_reports(cont, proj)
+            print_reports(cont, proj, simulation)
         print(
             f"Min Total VaR: {proj.min_total_VaR}, Max Total VaR: {proj.max_total_VaR}\n"
         )

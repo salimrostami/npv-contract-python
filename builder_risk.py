@@ -188,6 +188,8 @@ def builder_risk_uni(project: Project, contract: Contract, threshold_u):
             beta0, beta1 = builder_calc_alpha_beta(
                 project, contract, project.c_uni_low_b, threshold_u
             )
+            beta0 = beta0 or 0
+            beta1 = beta1 or 0
             # print(f"alpha0: {alpha0}, alpha1: {alpha1}")
             # print(f"beta0: {beta0},beta1: {beta1}\n")
             common_range = (project.d_uni_low_l, project.d_uni_high_h)

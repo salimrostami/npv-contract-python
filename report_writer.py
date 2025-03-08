@@ -2,48 +2,70 @@ from contract import Contract
 from project import Project
 
 
-def print_header():
+def print_header(simulation: bool):
     heads = [
         "type",
         "reward",
         "rate",
         "salary",
-        "SB_ENPV",
         "B_ENPV",
-        "SO_ENPV",
         "O_ENPV",
-        "SB_Risk%",
-        "B_Risk%",
-        "SO_Risk%",
-        "O_Risk%",
-        "SB_VaR",
-        "B_VaR",
-        "SO_VaR",
-        "O_VaR",
-        "T_VaR",
     ]
+    if simulation:
+        heads.append("SB_Risk%")
+    heads.append("B_Risk%")
+
+    if simulation:
+        heads.append("SO_Risk%")
+    heads.append("O_Risk%")
+
+    # For var values: add simulation results only if simulation is True.
+    if simulation:
+        heads.append("SB_VaR")
+    heads.append("B_VaR")
+
+    if simulation:
+        heads.append("SO_VaR")
+    heads.append("O_VaR")
+
+    # Always print the final rounded value.
+    heads.append("T_VaR")
     print("\n")
     print(" ".join(f"{x:<9}" for x in heads))
 
 
-def print_reports(contract: Contract, project: Project):
+def print_reports(contract: Contract, project: Project, simulation: bool):
+    # Always printed items
     row = [
         contract.type,
         contract.reward,
         contract.reimburse_rate,
         contract.salary,
-        project.sim_results.builder.enpv,
         project.exact_results.builder.enpv,
-        project.sim_results.owner.enpv,
         project.exact_results.owner.enpv,
-        project.sim_results.builder.risk,
-        project.exact_results.builder.risk,
-        project.sim_results.owner.risk,
-        project.exact_results.owner.risk,
-        project.sim_results.builder.var,
-        project.exact_results.builder.var,
-        project.sim_results.owner.var,
-        project.exact_results.owner.var,
-        round(project.exact_results.builder.var + project.exact_results.owner.var, 0),
     ]
+
+    # For risk values: add simulation results only if simulation is True.
+    if simulation:
+        row.append(project.sim_results.builder.risk)
+    row.append(project.exact_results.builder.risk)
+
+    if simulation:
+        row.append(project.sim_results.owner.risk)
+    row.append(project.exact_results.owner.risk)
+
+    # For var values: add simulation results only if simulation is True.
+    if simulation:
+        row.append(project.sim_results.builder.var)
+    row.append(project.exact_results.builder.var)
+
+    if simulation:
+        row.append(project.sim_results.owner.var)
+    row.append(project.exact_results.owner.var)
+
+    # Always print the final rounded value.
+    row.append(
+        round(project.exact_results.builder.var + project.exact_results.owner.var, 0)
+    )
+
     print(" ".join(f"{x:<9}" for x in row))
