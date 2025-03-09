@@ -10,12 +10,13 @@ from initialize import set_owner_threshold
 from builder_var import builder_var
 from owner_var import owner_var
 
-num_simulations = 1000
+num_simulations = 10000
 distribution = "uni"
-simulation = True
+simulation = False
 
 try:
     projects.append(Project("001", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000))
+    projects.append(Project("002", -5000, -4000, -1000, 0.1, 1, 10, 0.1, 5000, 100000))
 except ValueError as e:
     print(e)
 
@@ -41,10 +42,8 @@ def exact_calculations(
 
 def update_min_max_total_VaR(proj: Project):
     total_var = round(proj.exact_results.builder.var + proj.exact_results.owner.var, 0)
-    if total_var > proj.min_total_VaR:
-        proj.min_total_VaR = total_var
-    if total_var < proj.max_total_VaR:
-        proj.max_total_VaR = total_var
+    proj.min_total_VaR = max(total_var, proj.min_total_VaR)
+    proj.max_total_VaR = min(total_var, proj.max_total_VaR)
 
 
 def main():

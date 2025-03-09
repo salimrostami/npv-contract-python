@@ -126,6 +126,7 @@ def calc_salary(project, target_b_enpv, nu, R, distribution):
 
 
 def make_contracts(project: Project, target_b_enpv, distribution):
+    contracts.clear()
     counter = 0
     for nu in np.arange(0, 1.2, 0.2):
         Rmax = round(calc_reward(project, target_b_enpv, nu, 0, distribution), 2)
@@ -144,32 +145,3 @@ def make_contracts(project: Project, target_b_enpv, distribution):
             counter += 1
         except ValueError as e:
             print(e)
-
-
-# try:
-#     # contracts.append(Contract("001", 17000, 0, 0))
-#     # contracts.append(Contract("002", 12250, 0.5, 0))
-#     # contracts.append(Contract("003", 7500, 1, 0))
-#     # contracts.append(Contract("004", 16000, 0, 200))
-#     # contracts.append(Contract("005", 11250, 0.5, 200))
-#     # contracts.append(Contract("006", 6500, 1, 200))
-#     # contracts.append(Contract("007", 6450, 0.9, 400))
-#     # contracts.append(Contract("008", 5450, 0.9, 600))
-#     # contracts.append(Contract("009", 0, 0, 3400))
-#     # contracts.append(Contract("010", 0, 0.5, 2450))
-#     # contracts.append(Contract("011", 0, 0.9, 1690))
-#     # contracts.append(Contract("012", 0, 1, 1500))
-
-#     contracts.append(Contract("001", 27548, 0, 0))
-#     contracts.append(Contract("002", 15049, 0.5, 0))
-#     contracts.append(Contract("003", 2549, 1, 0))
-#     contracts.append(Contract("004", 26680, 0, 583))
-#     contracts.append(Contract("005", 14180, 0.5, 583))
-#     contracts.append(Contract("006", 4751, 0.9, 200))
-#     contracts.append(Contract("007", 2250, 1, 200))
-#     contracts.append(Contract("009", 0, 0, 18469))
-#     contracts.append(Contract("010", 0, 0.5, 10089))
-#     contracts.append(Contract("011", 0, 0.9, 3385))
-#     contracts.append(Contract("012", 0, 1, 1709))
-# except ValueError as e:
-#     print(e)

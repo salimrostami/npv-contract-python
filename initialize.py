@@ -10,4 +10,4 @@ def set_owner_threshold(project: Project, distribution):
             project, contracts[0], distribution
         ) - builder_enpv(project, contracts[0], distribution)
     else:
-        raise ValueError("No contracts have been created.")
+        raise ValueError("No owner threshold could be calculated.")
