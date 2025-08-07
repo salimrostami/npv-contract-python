@@ -46,13 +46,13 @@ def builder_calc_alpha_beta(project: Project, contract: Contract, x, threshold_u
             - (1 - contract.reimburse_rate) * x
             - contract.reward
         ) / contract.salary
-        if W0:
+        if W0 is not None:
             # print(f"W_0({W_arg}) = {W0}")
             Y0 = max(Y - (float(np.real(W0)) / project.discount_rate), 0)
         else:
             # print(f"W_{{0}} is not defined for {W_arg}\n")
             Y0 = None
-        if W1:
+        if W1 is not None:
             # print(f"W_{{-1}}({W_arg}) = {W1}\n")
             Y1 = max(Y - (float(np.real(W1)) / project.discount_rate), 0)
         else:

@@ -30,11 +30,11 @@ def owner_calc_eps_tau(project: Project, contract: Contract, x_ab, threshold_u):
             + contract.reimburse_rate * (project.c_down_pay + x_ab)
             - contract.reward
         ) / threshold_u
-        if log_arg > 0:
-            Y0 = np.log(log_arg) / project.discount_rate
+        value = np.log(log_arg) / project.discount_rate if log_arg > 0 else 0
+        if threshold_u > 0:
+            Y0, Y1 = value, None
         else:
-            Y0 = 0
-        Y1 = 0
+            Y0, Y1 = None, value
     else:
         W_arg = owner_calc_w_arg(project, contract, x_ab, threshold_u)
         # You can change this to any value
@@ -44,13 +44,13 @@ def owner_calc_eps_tau(project: Project, contract: Contract, x_ab, threshold_u):
             + contract.reimburse_rate * (project.c_down_pay + x_ab)
             - contract.reward
         ) / contract.salary
-        if W0:
+        if W0 is not None:
             # print(f"W_0({W_arg}) = {W0}")
             Y0 = max(Y - (float(np.real(W0)) / project.discount_rate), 0)
         else:
             # print(f"W_{{0}} is not defined for {W_arg}\n")
             Y0 = 0
-        if W1:
+        if W1 is not None:
             # print(f"W_{{-1}}({W_arg}) = {W1}\n")
             Y1 = max(Y - (float(np.real(W1)) / project.discount_rate), 0)
         else:
@@ -140,44 +140,110 @@ def owner_risk_uni_calc_integral(
 
 
 def owner_risk_uni(project: Project, contract: Contract, threshold_u):
-    eps0, eps1 = owner_calc_eps_tau(
-        project, contract, project.c_uni_high_a, threshold_u
-    )
-    tau0, tau1 = owner_calc_eps_tau(project, contract, project.c_uni_low_b, threshold_u)
-    # print(f"alpha0: {alpha0}, alpha1: {alpha1}")
-    # print(f"beta0: {beta0},beta1: {beta1}\n")
-    Emin, Emax = get_common_interval(
-        (project.d_uni_low_l, project.d_uni_high_h), (eps1, tau1)
-    )
-    Tmin, Tmax = get_common_interval(
-        (project.d_uni_low_l, project.d_uni_high_h), (tau0, eps0)
-    )
-    EM1, EM2 = get_common_interval(
-        (project.d_uni_low_l, project.d_uni_high_h), (0, eps1)
-    )
-    TP1, TP2 = get_common_interval(
-        (project.d_uni_low_l, project.d_uni_high_h), (eps0, float("inf"))
-    )
-    # print(
-    #     f"Emin: {Emin}, Emax: {Emax}, Tmin: {Tmin}, Tmax: {Tmax}, "
-    #     f"EM1: {EM1}, EM2: {EM2}, TP1: {TP1}, TP2: {TP2}\n"
-    # )
-    if TP2 and TP1:
-        risk = (TP2 - TP1) / (project.d_uni_high_h - project.d_uni_low_l)
-    else:  # HP2 is None
-        risk = 0
-    if contract.reimburse_rate > 0 and Tmax and Tmin:
-        risk += owner_risk_uni_calc_integral(
-            project, contract, Tmax, threshold_u
-        ) - owner_risk_uni_calc_integral(project, contract, Tmin, threshold_u)
-    if contract.salary > 0:
-        if EM2 and EM1:
-            risk += (EM2 - EM1) / (project.d_uni_high_h - project.d_uni_low_l)
-        if contract.reimburse_rate > 0 and Emax and Emin:
+    if threshold_u == 0 and contract.salary == 0 and contract.reimburse_rate > 0:
+        x = (
+            contract.reward
+            - contract.reimburse_rate * project.c_down_pay
+            - project.owner_income
+        ) / contract.reimburse_rate
+
+        risk = 1 - (
+            (x - project.c_uni_high_a) / (project.c_uni_low_b - project.c_uni_high_a)
+        )
+        return risk
+    else:
+        if threshold_u == 0 and contract.reimburse_rate > 0:
+            eps = (
+                contract.reimburse_rate * project.c_down_pay
+                + contract.reimburse_rate * project.c_uni_high_a
+                + project.owner_income
+                - contract.reward
+            ) / contract.salary
+            tau = (
+                contract.reimburse_rate * project.c_down_pay
+                + contract.reimburse_rate * project.c_uni_low_b
+                + project.owner_income
+                - contract.reward
+            ) / contract.salary
+            TP1, TP2 = get_common_interval(
+                (project.d_uni_low_l, project.d_uni_high_h), (0, eps)
+            )
+            Tmin, Tmax = get_common_interval(
+                (project.d_uni_low_l, project.d_uni_high_h),
+                (eps, tau),
+            )
+            Emin, Emax, EM1, EM2 = None, None, None, None
+        else:
+            eps0, eps1 = owner_calc_eps_tau(
+                project, contract, project.c_uni_high_a, threshold_u
+            )
+            tau0, tau1 = owner_calc_eps_tau(
+                project, contract, project.c_uni_low_b, threshold_u
+            )
+            # print(f"alpha0: {alpha0}, alpha1: {alpha1}")
+            # print(f"beta0: {beta0},beta1: {beta1}\n")
+            if threshold_u < 0:
+                x = 1
+            common_range = (project.d_uni_low_l, project.d_uni_high_h)
+            if threshold_u > 0:
+                intervals = {
+                    "em": get_common_interval(common_range, (0, eps1)),
+                    "e": get_common_interval(common_range, (eps1, tau1)),
+                    "t": get_common_interval(common_range, (tau0, eps0)),
+                    "tp": get_common_interval(common_range, (eps0, float("inf"))),
+                }
+                EM1, EM2 = intervals["em"]
+                Emin, Emax = intervals["e"]
+                Tmin, Tmax = intervals["t"]
+                TP1, TP2 = intervals["tp"]
+            else:
+                intervals = {
+                    "em": get_common_interval(common_range, (0, eps0)),
+                    "e": get_common_interval(common_range, (eps0, tau0)),
+                    "t": get_common_interval(common_range, (tau1, eps1)),
+                    "tp": get_common_interval(common_range, (eps1, float("inf"))),
+                }
+                EM1, EM2 = intervals["tp"]
+                Emin, Emax = intervals["t"]
+                Tmin, Tmax = intervals["e"]
+                TP1, TP2 = intervals["em"]
+
+            # EM1, EM2 = get_common_interval(
+            #     (project.d_uni_low_l, project.d_uni_high_h), (0, eps1)
+            # )
+            # Emin, Emax = get_common_interval(
+            #     (project.d_uni_low_l, project.d_uni_high_h), (eps1, tau1)
+            # )
+            # Tmin, Tmax = get_common_interval(
+            #     (project.d_uni_low_l, project.d_uni_high_h), (tau0, eps0)
+            # )
+            # TP1, TP2 = get_common_interval(
+            #     (project.d_uni_low_l, project.d_uni_high_h), (eps0, float("inf"))
+            # )
+            # print(
+            #     f"Emin: {Emin}, Emax: {Emax}, Tmin: {Tmin}, Tmax: {Tmax}, "
+            #     f"EM1: {EM1}, EM2: {EM2}, TP1: {TP1}, TP2: {TP2}\n"
+            # )
+        if TP2 and TP1:
+            risk = (TP2 - TP1) / (project.d_uni_high_h - project.d_uni_low_l)
+        else:  # HP2 is None
+            risk = 0
+        if contract.reimburse_rate > 0 and Tmax and Tmin:
             risk += owner_risk_uni_calc_integral(
-                project, contract, Emax, threshold_u
-            ) - owner_risk_uni_calc_integral(project, contract, Emin, threshold_u)
-    return risk
+                project, contract, Tmax, threshold_u
+            ) - owner_risk_uni_calc_integral(project, contract, Tmin, threshold_u)
+        if contract.salary > 0:
+            if EM2 and EM1:
+                risk += (EM2 - EM1) / (project.d_uni_high_h - project.d_uni_low_l)
+            if contract.reimburse_rate > 0 and Emax and Emin:
+                risk += owner_risk_uni_calc_integral(
+                    project, contract, Emax, threshold_u
+                ) - owner_risk_uni_calc_integral(project, contract, Emin, threshold_u)
+
+        if threshold_u > 0:
+            return risk
+        else:
+            return 1 - risk
 
 
 def owner_risk(project: Project, contract: Contract, distribution, threshold_u):
