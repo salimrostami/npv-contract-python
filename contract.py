@@ -3,7 +3,7 @@ import numpy as np
 
 
 class Contract:
-    def __init__(self, cont_id, reward, rate, salary):
+    def __init__(self, cont_id, reward, rate, salary, subtype):
         self.id = cont_id
         self.reimburse_rate = rate
         self.salary = salary
@@ -22,6 +22,7 @@ class Contract:
                 "Unexpected contract type: "
                 f"reward={reward}, rate={rate}, salary={salary}"
             )
+        self.subtype = subtype
 
 
 contracts = []
@@ -128,20 +129,23 @@ def calc_salary(project, target_b_enpv, nu, R, distribution):
 def make_contracts(project: Project, target_b_enpv, distribution):
     contracts.clear()
     counter = 0
-    for nu in np.arange(0, 1.2, 0.2):
+    for nu in np.arange(0, 1.01, 0.01):
         Rmax = round(calc_reward(project, target_b_enpv, nu, 0, distribution), 2)
         Smax = round(calc_salary(project, target_b_enpv, nu, 0, distribution), 2)
-        R_Smax2 = round(
-            calc_reward(project, target_b_enpv, nu, Smax / 2, distribution), 2
-        )
-        try:
-            contracts.append(Contract(f"{(counter+1):03}", Rmax, round(nu, 2), 0))
-            counter += 1
-            contracts.append(
-                Contract(f"{(counter+1):03}", R_Smax2, round(nu, 2), round(Smax / 2, 2))
-            )
-            counter += 1
-            contracts.append(Contract(f"{(counter+1):03}", 0, round(nu, 2), Smax))
-            counter += 1
-        except ValueError as e:
-            print(e)
+        # R_Smax2 = round(
+        #     calc_reward(project, target_b_enpv, nu, Smax / 2, distribution), 2
+        # )
+        for s in np.arange(0, 1.01, 0.01):
+            try:
+                contracts.append(
+                    Contract(
+                        f"{(counter+1):03}",
+                        round(Rmax * (1 - s), 2),
+                        round(nu, 2),
+                        round(Smax * s, 2),
+                        f"{round(nu, 2)}-{round(s, 2)}",
+                    )
+                )
+                counter += 1
+            except ValueError as e:
+                print(e)

@@ -186,27 +186,15 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
                 x = 1
             common_range = (project.d_uni_low_l, project.d_uni_high_h)
             if threshold_u > 0:
-                intervals = {
-                    "em": get_common_interval(common_range, (0, eps1)),
-                    "e": get_common_interval(common_range, (eps1, tau1)),
-                    "t": get_common_interval(common_range, (tau0, eps0)),
-                    "tp": get_common_interval(common_range, (eps0, float("inf"))),
-                }
-                EM1, EM2 = intervals["em"]
-                Emin, Emax = intervals["e"]
-                Tmin, Tmax = intervals["t"]
-                TP1, TP2 = intervals["tp"]
+                EM1, EM2 = get_common_interval(common_range, (0, eps1))
+                Emin, Emax = get_common_interval(common_range, (eps1, tau1))
+                Tmin, Tmax = get_common_interval(common_range, (tau0, eps0))
+                TP1, TP2 = get_common_interval(common_range, (eps0, float("inf")))
             else:
-                intervals = {
-                    "em": get_common_interval(common_range, (0, eps0)),
-                    "e": get_common_interval(common_range, (eps0, tau0)),
-                    "t": get_common_interval(common_range, (tau1, eps1)),
-                    "tp": get_common_interval(common_range, (eps1, float("inf"))),
-                }
-                EM1, EM2 = intervals["tp"]
-                Emin, Emax = intervals["t"]
-                Tmin, Tmax = intervals["e"]
-                TP1, TP2 = intervals["em"]
+                EM1, EM2 = get_common_interval(common_range, (eps1, float("inf")))
+                Emin, Emax = get_common_interval(common_range, (tau1, eps1))
+                Tmin, Tmax = get_common_interval(common_range, (eps0, tau0))
+                TP1, TP2 = get_common_interval(common_range, (0, eps0))
 
             # EM1, EM2 = get_common_interval(
             #     (project.d_uni_low_l, project.d_uni_high_h), (0, eps1)

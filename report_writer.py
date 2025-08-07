@@ -1,10 +1,20 @@
 from contract import Contract
 from project import Project
+from datetime import datetime
+import os
+import atexit
+
+
+def print_and_log(log_file, text: str):
+    """Helper to print to console and log to file."""
+    print(text)
+    log_file.write(text + "\n")
 
 
 def print_header(simulation: bool):
     heads = [
         "type",
+        "subtype",
         "reward",
         "rate",
         "salary",
@@ -30,14 +40,23 @@ def print_header(simulation: bool):
 
     # Always print the final rounded value.
     heads.append("T_VaR")
-    print("\n")
-    print(" ".join(f"{x:<9}" for x in heads))
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"{timestamp}.txt"
+    file_path = os.path.join(os.path.dirname(__file__), file_name)
+    log_file = open(file_path, "w")
+
+    print_and_log(log_file, "\n")
+    print_and_log(log_file, " ".join(f"{x:<9}" for x in heads))
+
+    return log_file
 
 
-def print_reports(contract: Contract, project: Project, simulation: bool):
+def print_reports(log_file, contract: Contract, project: Project, simulation: bool):
     # Always printed items
     row = [
         contract.type,
+        contract.subtype,
         contract.reward,
         contract.reimburse_rate,
         contract.salary,
@@ -68,4 +87,5 @@ def print_reports(contract: Contract, project: Project, simulation: bool):
         round(project.exact_results.builder.var + project.exact_results.owner.var, 0)
     )
 
-    print(" ".join(f"{x:<9}" for x in row))
+    print_and_log(log_file, " ".join(f"{x:<9}" for x in row))
+    atexit.register(log_file.close)
