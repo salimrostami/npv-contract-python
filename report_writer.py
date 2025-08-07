@@ -43,7 +43,13 @@ def print_header(simulation: bool):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{timestamp}.txt"
-    file_path = os.path.join(os.path.dirname(__file__), file_name)
+
+    # Ensure the 'reports' directory exists
+    reports_dir = os.path.join(os.path.dirname(__file__), "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    # Update file path to use the 'reports' directory
+    file_path = os.path.join(reports_dir, file_name)
     log_file = open(file_path, "w")
 
     print_and_log(log_file, "\n")
