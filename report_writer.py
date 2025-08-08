@@ -11,7 +11,7 @@ def print_and_log(log_file, text: str):
     log_file.write(text + "\n")
 
 
-def print_header(simulation: bool):
+def print_header(project: Project, simulation: bool):
     heads = [
         "type",
         "subtype",
@@ -42,7 +42,7 @@ def print_header(simulation: bool):
     heads.append("T_VaR")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"{timestamp}.txt"
+    file_name = f"{timestamp}_P{project.proj_id}.txt"
 
     # Ensure the 'reports' directory exists
     reports_dir = os.path.join(os.path.dirname(__file__), "reports")
@@ -90,7 +90,7 @@ def print_reports(log_file, contract: Contract, project: Project, simulation: bo
 
     # Always print the final rounded value.
     row.append(
-        round(project.exact_results.builder.var + project.exact_results.owner.var, 0)
+        round(project.exact_results.builder.var + project.exact_results.owner.var, 2)
     )
 
     print_and_log(log_file, " ".join(f"{x:<9}" for x in row))
