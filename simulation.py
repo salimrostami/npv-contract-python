@@ -74,19 +74,19 @@ def simulate(
     # print(builder_npvs)
     # print(owner_npvs)
 
-    builder_enpv = round(np.mean(builder_npvs), 2)  # expected npv over simulations
+    builder_enpv = round(np.mean(builder_npvs), 4)  # expected npv over simulations
     builder_risk = round(
-        float(100 * counter_builder_low_npv / num_simulations), 2
+        float(100 * counter_builder_low_npv / num_simulations), 4
     )  # low npv probability over simulations
     builder_var = round(
-        np.percentile(builder_npvs, 5) - builder_enpv, 2
+        np.percentile(builder_npvs, 5) - builder_enpv, 4
     )  # VaR at 5% level
 
-    owner_enpv = round(np.mean(owner_npvs), 2)  # expected npv over simulations
+    owner_enpv = round(np.mean(owner_npvs), 4)  # expected npv over simulations
     owner_risk = round(
-        float(100 * counter_owner_low_npv / num_simulations), 2
+        float(100 * counter_owner_low_npv / num_simulations), 4
     )  # low npv probability over simulations
-    owner_var = round(np.percentile(owner_npvs, 5) - owner_enpv, 2)  # VaR at 5% level
+    owner_var = round(np.percentile(owner_npvs, 5) - owner_enpv, 4)  # VaR at 5% level
 
     project.sim_results.builder.enpv = builder_enpv
     project.sim_results.builder.risk = builder_risk

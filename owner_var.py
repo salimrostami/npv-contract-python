@@ -32,7 +32,7 @@ def owner_var(project: Project, contract: Contract, distribution, target_probabi
 
     # Compute VaR
     var = binary_search_var(
-        project, contract, distribution, target_probability, x_low, x_high, tol=1
+        project, contract, distribution, target_probability, x_low, x_high, tol=0.000001
     )
     return var
 

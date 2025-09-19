@@ -52,8 +52,8 @@ def print_header(project: Project, simulation: bool):
     file_path = os.path.join(reports_dir, file_name)
     log_file = open(file_path, "w")
 
-    print_and_log(log_file, "\n")
-    print_and_log(log_file, " ".join(f"{x:<9}" for x in heads))
+    # print_and_log(log_file, "\n")
+    print_and_log(log_file, "\t".join(f"{x:<9}" for x in heads))
 
     return log_file
 
@@ -90,8 +90,8 @@ def print_reports(log_file, contract: Contract, project: Project, simulation: bo
 
     # Always print the final rounded value.
     row.append(
-        round(project.exact_results.builder.var + project.exact_results.owner.var, 2)
+        round(project.exact_results.builder.var + project.exact_results.owner.var, 6)
     )
 
-    print_and_log(log_file, " ".join(f"{x:<9}" for x in row))
+    print_and_log(log_file, "\t".join(f"{x:<9}" for x in row))
     atexit.register(log_file.close)

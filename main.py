@@ -1,3 +1,4 @@
+from peak_search import cp_opt_r
 from project import projects, Project
 from contract import contracts, Contract, make_contracts
 from simulation import simulate
@@ -18,8 +19,8 @@ simulation = False
 try:
     projects.extend(
         [
-            # Project("001", -2000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
-            # Project("002", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
+            # Project("001", -2000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
+            Project("002", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
             # Project("003", -10000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
             # Project("004", -15000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
             # Project("005", -5000, -20000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
@@ -33,7 +34,7 @@ try:
             # Project("013", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 75000),
             # Project("014", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 150000),
             # Project("015", -5000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 300000),
-            Project("016", -5000, -35000, -5000, 0.1, 1, 10, 0.1, 5000, 100000),
+            # Project("016", -5000, -35000, -5000, 0.1, 1, 10, 0.1, 5000, 100000),
         ]
     )
 except ValueError as e:
@@ -43,24 +44,24 @@ except ValueError as e:
 def exact_calculations(
     proj: Project, cont: Contract, distribution: str, builder_threshold_u: int
 ):
-    proj.exact_results.builder.enpv = round(builder_enpv(proj, cont, distribution), 2)
-    proj.exact_results.owner.enpv = round(owner_enpv(proj, cont, distribution), 2)
+    proj.exact_results.builder.enpv = round(builder_enpv(proj, cont, distribution), 6)
+    proj.exact_results.owner.enpv = round(owner_enpv(proj, cont, distribution), 6)
     proj.exact_results.builder.risk = round(
-        100 * builder_risk(proj, cont, distribution, builder_threshold_u), 2
+        100 * builder_risk(proj, cont, distribution, builder_threshold_u), 6
     )
     proj.exact_results.owner.risk = round(
-        100 * owner_risk(proj, cont, distribution, proj.owner_threshold), 2
+        100 * owner_risk(proj, cont, distribution, proj.owner_threshold), 6
     )
     proj.exact_results.builder.var = round(
-        builder_var(proj, cont, distribution, 0.05) - proj.exact_results.builder.enpv, 2
+        builder_var(proj, cont, distribution, 0.05) - proj.exact_results.builder.enpv, 6
     )
     proj.exact_results.owner.var = round(
-        owner_var(proj, cont, distribution, 0.05) - proj.exact_results.owner.enpv, 2
+        owner_var(proj, cont, distribution, 0.05) - proj.exact_results.owner.enpv, 6
     )
 
 
 def update_min_max_total_VaR(proj: Project):
-    total_var = round(proj.exact_results.builder.var + proj.exact_results.owner.var, 0)
+    total_var = round(proj.exact_results.builder.var + proj.exact_results.owner.var, 6)
     proj.min_total_VaR = max(total_var, proj.min_total_VaR)
     proj.max_total_VaR = min(total_var, proj.max_total_VaR)
 
@@ -81,6 +82,11 @@ def main():
         print(
             f"Min Total VaR: {proj.min_total_VaR}, Max Total VaR: {proj.max_total_VaR}\n"
         )
+    optimal_cp_r, optimal_cp_tvar = cp_opt_r(
+        proj, proj.builder_target_enpv, distribution, 0.000001
+    )
+    print(f"Optimal CP Reimburse Rate: {optimal_cp_r}, Total VaR: {optimal_cp_tvar}")
+    print("End of the program.")
 
 
 if __name__ == "__main__":
