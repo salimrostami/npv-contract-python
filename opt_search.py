@@ -8,7 +8,7 @@ from builder_var import builder_var
 from owner_var import owner_var
 
 
-def f(proj: Project, cont: Contract, target_b_enpv, distribution, x) -> float:
+def f_cp(proj: Project, cont: Contract, target_b_enpv, distribution, x) -> float:
     cont.reimburse_rate = x
     cont.reward = round(calc_reward(proj, target_b_enpv, x, 0, distribution), 6)
 
@@ -21,9 +21,7 @@ def f(proj: Project, cont: Contract, target_b_enpv, distribution, x) -> float:
     return bvar + ovar
 
 
-def cp_opt_r(
-    proj: Project, target_b_enpv, distribution, E: float
-) -> Tuple[float, float]:
+def cp_opt_r(proj: Project, distribution, E: float) -> Tuple[float, float]:
     """
     Find the peak of a convex function f in the interval [x_min, x_max] using a binary-search-like
     approach.
@@ -35,14 +33,14 @@ def cp_opt_r(
         E: The threshold below which we stop refining the interval.
 
     Returns:
-        A tuple (x_peak, f(x_peak)) where x_peak is the x-value at the peak and f(x_peak) is the
-        corresponding maximum y-value.
+        A tuple (x_peak, f_cp(x_peak)) where x_peak is the x-value at the peak and f_cp(x_peak) is
+        the corresponding maximum y-value.
     """
 
     # Initial boundaries
-    x_left = 0.7890625  # -19580.61
-    x_right = 0.7900390625  # -19580.54
-    x_center = 0.78955078125  # -19580.48
+    x_left = 0
+    x_right = 1
+    x_center = (x_left + x_right) / 2.0
 
     # Evaluate initial points
     cont = Contract(
@@ -52,9 +50,9 @@ def cp_opt_r(
         0,
         "---",
     )
-    y_center = f(proj, cont, target_b_enpv, distribution, x_center)
-    y_left = f(proj, cont, target_b_enpv, distribution, x_left)
-    y_right = f(proj, cont, target_b_enpv, distribution, x_right)
+    y_center = f_cp(proj, cont, proj.builder_target_enpv, distribution, x_center)
+    y_left = f_cp(proj, cont, proj.builder_target_enpv, distribution, x_left)
+    y_right = f_cp(proj, cont, proj.builder_target_enpv, distribution, x_right)
 
     while (x_right - x_left) > E:
         # Check the slope and determine the direction
@@ -64,8 +62,8 @@ def cp_opt_r(
             x_right = x_center
             x_center = (x_left + x_center) / 2.0
             y_right = y_center  # since x_center is the new right boundary
-            y_center = f(
-                proj, cont, target_b_enpv, distribution, x_center
+            y_center = f_cp(
+                proj, cont, proj.builder_target_enpv, distribution, x_center
             )  # re-eval center
         elif y_right > y_center:
             # Check if we are at the boundary and still going uphill
@@ -77,8 +75,8 @@ def cp_opt_r(
             x_right = min(1, x_center + (x_center - x_left))
             y_left = y_center
             y_center = y_right
-            y_right = f(
-                proj, cont, target_b_enpv, distribution, x_right
+            y_right = f_cp(
+                proj, cont, proj.builder_target_enpv, distribution, x_right
             )  # re-eval right
         else:
             # Check if we are at the boundary and still going uphill
@@ -90,7 +88,9 @@ def cp_opt_r(
             x_left = max(0, x_center - (x_right - x_center))
             y_right = y_center
             y_center = y_left
-            y_left = f(proj, cont, target_b_enpv, distribution, x_left)  # re-eval left
+            y_left = f_cp(
+                proj, cont, proj.builder_target_enpv, distribution, x_left
+            )  # re-eval left
 
     # After loop, the interval is smaller than E
     # Return the best found in the final interval

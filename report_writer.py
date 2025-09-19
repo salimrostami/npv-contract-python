@@ -11,7 +11,7 @@ def print_and_log(log_file, text: str):
     log_file.write(text + "\n")
 
 
-def print_header(project: Project, simulation: bool):
+def full_header(project: Project, isSim: bool):
     heads = [
         "type",
         "subtype",
@@ -21,20 +21,20 @@ def print_header(project: Project, simulation: bool):
         "B_ENPV",
         "O_ENPV",
     ]
-    if simulation:
+    if isSim:
         heads.append("SB_Risk%")
     heads.append("B_Risk%")
 
-    if simulation:
+    if isSim:
         heads.append("SO_Risk%")
     heads.append("O_Risk%")
 
     # For var values: add simulation results only if simulation is True.
-    if simulation:
+    if isSim:
         heads.append("SB_VaR")
     heads.append("B_VaR")
 
-    if simulation:
+    if isSim:
         heads.append("SO_VaR")
     heads.append("O_VaR")
 
@@ -58,7 +58,7 @@ def print_header(project: Project, simulation: bool):
     return log_file
 
 
-def print_reports(log_file, contract: Contract, project: Project, simulation: bool):
+def full_report(log_file, contract: Contract, project: Project, isSim: bool):
     # Always printed items
     row = [
         contract.type,
@@ -71,20 +71,20 @@ def print_reports(log_file, contract: Contract, project: Project, simulation: bo
     ]
 
     # For risk values: add simulation results only if simulation is True.
-    if simulation:
+    if isSim:
         row.append(project.sim_results.builder.risk)
     row.append(project.exact_results.builder.risk)
 
-    if simulation:
+    if isSim:
         row.append(project.sim_results.owner.risk)
     row.append(project.exact_results.owner.risk)
 
     # For var values: add simulation results only if simulation is True.
-    if simulation:
+    if isSim:
         row.append(project.sim_results.builder.var)
     row.append(project.exact_results.builder.var)
 
-    if simulation:
+    if isSim:
         row.append(project.sim_results.owner.var)
     row.append(project.exact_results.owner.var)
 
