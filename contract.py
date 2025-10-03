@@ -4,10 +4,11 @@ import numpy as np
 
 class Contract:
     def __init__(self, cont_id, reward, rate, salary, subtype):
-        self.id = cont_id
-        self.reimburse_rate = rate
-        self.salary = salary
-        self.reward = reward
+        self.id: str = cont_id
+        self.reimburse_rate: float = rate
+        self.salary: float = salary
+        self.reward: float = reward
+        self.type: str = ""
         if salary == 0 and rate == 0:
             self.type = "ls"
         elif salary == 0 and rate > 0:
@@ -22,7 +23,7 @@ class Contract:
                 "Unexpected contract type: "
                 f"reward={reward}, rate={rate}, salary={salary}"
             )
-        self.subtype = subtype
+        self.subtype: str = subtype
 
 
 contracts = []
@@ -129,10 +130,10 @@ def calc_salary(project, target_b_enpv, nu, R, distribution):
 def make_contracts(project: Project, target_b_enpv, distribution):
     contracts.clear()
     counter = 0
-    for nu in np.arange(0, 1.01, 0.01):
+    for nu in np.arange(0, 1.09, 0.1):
         Rmax = round(calc_reward(project, target_b_enpv, nu, 0, distribution), 4)
         Smax = round(calc_salary(project, target_b_enpv, nu, 0, distribution), 4)
-        for s in np.arange(0, 1.01, 0.01):
+        for s in np.arange(0, 1.09, 0.1):
             try:
                 contracts.append(
                     Contract(

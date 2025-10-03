@@ -1,64 +1,146 @@
 import numpy as np
-from math_helpers import compute_lambert_w, get_common_interval
+from math_helpers import build_interval, compute_lambert_w, get_common_interval
 from project import Project
 from contract import Contract
 
 
 def builder_calc_w_arg(project: Project, contract: Contract, x, threshold_u):
-    return float(
+    exp_arg = (
+        project.discount_rate
+        * (
+            (1 - contract.reimburse_rate) * x
+            - contract.reimburse_rate * project.c_down_pay
+            + contract.reward
+        )
+        / contract.salary
+    )
+    exp_result = np.float64(np.exp(exp_arg))
+
+    # limit = np.finfo(float).max  # ~1.797e308
+    # if abs(exp_arg) > limit:
+    #     print("Too large!")
+
+    w_arg = np.float64(
         (
             project.discount_rate
             * (project.c_down_pay - threshold_u)
-            / (
-                contract.salary
-                * np.exp(
-                    project.discount_rate
-                    * (
-                        (1 - contract.reimburse_rate) * x
-                        - contract.reimburse_rate * project.c_down_pay
-                        + contract.reward
-                    )
-                    / contract.salary
-                )
-            )
+            / (contract.salary * exp_result)
         )
     )
 
+    return w_arg if w_arg != np.inf else np.finfo(np.float64).max
 
-def builder_calc_alpha_beta(project: Project, contract: Contract, x, threshold_u):
-    if contract.salary == 0:
-        log_arg = (
-            contract.reward
-            - contract.reimburse_rate * project.c_down_pay
-            + (1 - contract.reimburse_rate) * x
-        ) / (threshold_u - project.c_down_pay)
-        value = np.log(log_arg) / project.discount_rate if log_arg > 0 else 0
-        if threshold_u - project.c_down_pay > 0:
-            Y0, Y1 = None, value
-        else:
-            Y0, Y1 = value, None
+
+def builder_calc_alpha_beta_w(project: Project, contract: Contract, x, threshold_u):
+    W_arg = builder_calc_w_arg(project, contract, x, threshold_u)
+    W0, W1 = compute_lambert_w(W_arg)
+    Y = (
+        contract.reimburse_rate * project.c_down_pay
+        - (1 - contract.reimburse_rate) * x
+        - contract.reward
+    ) / contract.salary
+    if W0 is not None:
+        # print(f"W_0({W_arg}) = {W0}")
+        Y0 = max(Y - (float(np.real(W0)) / project.discount_rate), 0)
     else:
-        W_arg = builder_calc_w_arg(project, contract, x, threshold_u)
-        # You can change this to any value
-        W0, W1 = compute_lambert_w(W_arg)
-        Y = (
-            contract.reimburse_rate * project.c_down_pay
-            - (1 - contract.reimburse_rate) * x
-            - contract.reward
-        ) / contract.salary
-        if W0 is not None:
-            # print(f"W_0({W_arg}) = {W0}")
-            Y0 = max(Y - (float(np.real(W0)) / project.discount_rate), 0)
-        else:
-            # print(f"W_{{0}} is not defined for {W_arg}\n")
-            Y0 = None
-        if W1 is not None:
-            # print(f"W_{{-1}}({W_arg}) = {W1}\n")
-            Y1 = max(Y - (float(np.real(W1)) / project.discount_rate), 0)
-        else:
-            # print(f"W_{{-1}} is not defined for {W_arg}\n")
-            Y1 = None
+        # print(f"W_{{0}} is not defined for {W_arg}\n")
+        Y0 = None
+    if W1 is not None:
+        # print(f"W_{{-1}}({W_arg}) = {W1}\n")
+        Y1 = max(Y - (float(np.real(W1)) / project.discount_rate), 0)
+    else:
+        # print(f"W_{{-1}} is not defined for {W_arg}\n")
+        Y1 = None
     return Y0, Y1
+
+
+def builder_calc_alpha_beta_log(project: Project, contract: Contract, x, threshold_u):
+    log_arg = (
+        contract.reward
+        - contract.reimburse_rate * project.c_down_pay
+        + (1 - contract.reimburse_rate) * x
+    ) / (threshold_u - project.c_down_pay)
+    value = np.log(log_arg) / project.discount_rate if log_arg > 0 else None
+    return value
+
+
+def builder_calc_intervals(project: Project, contract: Contract, threshold_u):
+    if threshold_u > project.c_down_pay:
+        if contract.salary > 0:
+            alpha_0, alpha_1 = builder_calc_alpha_beta_w(
+                project, contract, project.c_uni_high_a, threshold_u
+            )
+            beta_0, beta_1 = builder_calc_alpha_beta_w(
+                project, contract, project.c_uni_low_b, threshold_u
+            )
+        elif contract.salary == 0:
+            alpha_0 = 0
+            beta_0 = 0
+            alpha_1 = builder_calc_alpha_beta_log(
+                project, contract, project.c_uni_high_a, threshold_u
+            )
+            beta_1 = builder_calc_alpha_beta_log(
+                project, contract, project.c_uni_low_b, threshold_u
+            )
+        else:
+            raise ValueError(
+                f"contract.salary: {contract.salary} must be a non-negative number."
+            )
+    elif threshold_u < project.c_down_pay:
+        if contract.salary > 0:
+            alpha_0, alpha_1 = builder_calc_alpha_beta_w(
+                project, contract, project.c_uni_high_a, threshold_u
+            )
+            beta_0, beta_1 = builder_calc_alpha_beta_w(
+                project, contract, project.c_uni_low_b, threshold_u
+            )
+        elif contract.salary == 0:
+            alpha_0 = builder_calc_alpha_beta_log(
+                project, contract, project.c_uni_high_a, threshold_u
+            )
+            beta_0 = builder_calc_alpha_beta_log(
+                project, contract, project.c_uni_low_b, threshold_u
+            )
+            alpha_1 = None
+            beta_1 = None
+        else:
+            raise ValueError(
+                f"contract.salary: {contract.salary} must be a non-negative number."
+            )
+    elif threshold_u == project.c_down_pay:
+        if contract.salary > 0:
+            alpha_0, alpha_1 = builder_calc_alpha_beta_w(
+                project, contract, project.c_uni_high_a, threshold_u
+            )
+            beta_0, beta_1 = builder_calc_alpha_beta_w(
+                project, contract, project.c_uni_low_b, threshold_u
+            )
+    else:
+        raise ValueError(
+            f"unexpected number in threshold_u: {threshold_u} and "
+            f"project.c_down_pay: {project.c_down_pay}",
+        )
+
+    if threshold_u == project.c_down_pay and contract.salary == 0:
+        L = (0, 0)
+        ML = (0, float("inf"))
+        MR = (None, None)
+        R = (None, None)
+    else:
+        L = (0, alpha_0)
+        ML = build_interval(alpha_0, beta_0)
+        MR = build_interval(beta_1, alpha_1)
+        R = (alpha_1, float("inf"))
+
+    if (
+        L == (None, None)
+        and ML == (None, None)
+        and MR == (None, None)
+        and R == (None, None)
+    ):
+        raise ValueError("None of the intervals is defined.")
+
+    return L, ML, MR, R
 
 
 def builder_risk_expo_calc_integral(
@@ -95,7 +177,7 @@ def builder_risk_expo_calc_integral(
 
 
 def builder_risk_expo(project: Project, contract: Contract, threshold_u):
-    alpha0, alpha1 = builder_calc_alpha_beta(
+    alpha0, alpha1 = builder_calc_alpha_beta_w(
         project, contract, project.c_uni_high_a, threshold_u
     )
     # print(f"alpha0: {alpha0}, alpha1: {alpha1}\n")
@@ -104,7 +186,7 @@ def builder_risk_expo(project: Project, contract: Contract, threshold_u):
     else:
         risk = 0
     if contract.reimburse_rate < 1:
-        beta0, beta1 = builder_calc_alpha_beta(
+        beta0, beta1 = builder_calc_alpha_beta_w(
             project, contract, project.c_uni_low_b, threshold_u
         )
         if beta1 is None:
@@ -152,79 +234,34 @@ def builder_risk_uni(project: Project, contract: Contract, threshold_u):
     if (
         threshold_u == project.c_down_pay
         and contract.salary == 0
-        and contract.reimburse_rate < 1
+        and contract.reimburse_rate == 1
     ):
-        x = (contract.reimburse_rate * project.c_down_pay - contract.reward) / (
-            1 - contract.reimburse_rate
+        risk = (
+            1 if contract.reward < contract.reimburse_rate * project.c_down_pay else 0
         )
-        risk = 1 - (
-            (x - project.c_uni_high_a) / (project.c_uni_low_b - project.c_uni_high_a)
-        )
-        return risk
     else:
-        if threshold_u == project.c_down_pay and contract.reimburse_rate < 1:
-            alpha = (
-                contract.reimburse_rate * project.c_down_pay
-                - (1 - contract.reimburse_rate) * project.c_uni_high_a
-                - contract.reward
-            ) / contract.salary
-            beta = (
-                contract.reimburse_rate * project.c_down_pay
-                - (1 - contract.reimburse_rate) * project.c_uni_low_b
-                - contract.reward
-            ) / contract.salary
-            HP1, HP2 = get_common_interval(
-                (project.d_uni_low_l, project.d_uni_high_h), (0, alpha)
-            )
-            Hmin, Hmax = get_common_interval(
-                (project.d_uni_low_l, project.d_uni_high_h),
-                (alpha, beta),
-            )
-            Lmin, Lmax, LM1, LM2 = None, None, None, None
+        L, ML, MR, R = builder_calc_intervals(project, contract, threshold_u)
+        common_range = (project.d_uni_low_l, project.d_uni_high_h)
+        L = get_common_interval(common_range, L)
+        ML = get_common_interval(common_range, ML)
+        MR = get_common_interval(common_range, MR)
+        R = get_common_interval(common_range, R)
+        if L[0] is not None and L[1] is not None:
+            risk = (L[1] - L[0]) / (project.d_uni_high_h - project.d_uni_low_l)
         else:
-            alpha0, alpha1 = builder_calc_alpha_beta(
-                project, contract, project.c_uni_high_a, threshold_u
-            )
-            beta0, beta1 = builder_calc_alpha_beta(
-                project, contract, project.c_uni_low_b, threshold_u
-            )
-            beta0 = beta0 or 0
-            beta1 = beta1 or 0
-            # print(f"alpha0: {alpha0}, alpha1: {alpha1}")
-            # print(f"beta0: {beta0},beta1: {beta1}\n")
-            common_range = (project.d_uni_low_l, project.d_uni_high_h)
-            intervals = {
-                "hp": get_common_interval(common_range, (0, alpha0)),
-                "h": get_common_interval(common_range, (alpha0, beta0)),
-                "l": get_common_interval(common_range, (beta1, alpha1)),
-                "lm": get_common_interval(common_range, (alpha1, float("inf"))),
-            }
-            if threshold_u - project.c_down_pay < 0:
-                HP1, HP2 = intervals["hp"]
-                Hmin, Hmax = intervals["h"]
-                Lmin, Lmax = intervals["l"]
-                LM1, LM2 = intervals["lm"]
-            else:
-                LM1, LM2 = intervals["hp"]
-                Lmin, Lmax = intervals["h"]
-                Hmin, Hmax = intervals["l"]
-                HP1, HP2 = intervals["lm"]
-        if HP2 and HP1:
-            risk = (HP2 - HP1) / (project.d_uni_high_h - project.d_uni_low_l)
-        else:  # HP2 is None
             risk = 0
-        if contract.reimburse_rate < 1 and Hmax and Hmin:
+        if ML[0] is not None and ML[1] is not None and ML[0] < ML[1]:
             risk += builder_risk_uni_calc_integral(
-                project, contract, Hmax, threshold_u
-            ) - builder_risk_uni_calc_integral(project, contract, Hmin, threshold_u)
-        if contract.salary > 0:
-            if LM2 and LM1:
-                risk += (LM2 - LM1) / (project.d_uni_high_h - project.d_uni_low_l)
-            if contract.reimburse_rate < 1 and Lmax and Lmin:
-                risk += builder_risk_uni_calc_integral(
-                    project, contract, Lmax, threshold_u
-                ) - builder_risk_uni_calc_integral(project, contract, Lmin, threshold_u)
-        return risk
+                project, contract, ML[1], threshold_u
+            ) - builder_risk_uni_calc_integral(project, contract, ML[0], threshold_u)
+        if MR[0] is not None and MR[1] is not None and MR[0] < MR[1]:
+            risk += builder_risk_uni_calc_integral(
+                project, contract, MR[1], threshold_u
+            ) - builder_risk_uni_calc_integral(project, contract, MR[0], threshold_u)
+        if R[0] is not None and R[1] is not None:
+            risk += (R[1] - R[0]) / (project.d_uni_high_h - project.d_uni_low_l)
+
+    return risk
 
 
 def builder_risk(project: Project, contract: Contract, distribution, threshold_u):

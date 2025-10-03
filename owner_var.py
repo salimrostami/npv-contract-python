@@ -10,7 +10,7 @@ def owner_var(project: Project, contract: Contract, distribution, target_probabi
     if prob < target_probability:
         x_low = x
         while True:
-            x += project.owner_threshold / 10
+            x += abs(project.owner_target_enpv) / 10
             prob = owner_risk(project, contract, distribution, x)
             if prob > target_probability:
                 x_high = x
@@ -20,7 +20,7 @@ def owner_var(project: Project, contract: Contract, distribution, target_probabi
     elif prob > target_probability:
         x_high = x
         while True:
-            x -= project.owner_threshold / 10
+            x -= abs(project.owner_target_enpv) / 10
             prob = owner_risk(project, contract, distribution, x)
             if prob < target_probability:
                 x_low = x

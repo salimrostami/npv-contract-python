@@ -23,6 +23,38 @@ class SimResults:
 
 
 @dataclass
+class bestLS:
+    contract: any = None
+    tvar: float = None
+    builder: Result = field(default_factory=Result)
+    owner: Result = field(default_factory=Result)
+
+
+@dataclass
+class bestLH:
+    contract: any = None
+    tvar: float = None
+    builder: Result = field(default_factory=Result)
+    owner: Result = field(default_factory=Result)
+
+
+@dataclass
+class bestCP:
+    contract: any = None
+    tvar: float = None
+    builder: Result = field(default_factory=Result)
+    owner: Result = field(default_factory=Result)
+
+
+@dataclass
+class bestTM:
+    contract: any = None
+    tvar: float = None
+    builder: Result = field(default_factory=Result)
+    owner: Result = field(default_factory=Result)
+
+
+@dataclass
 class Project:
     proj_id: int
     c_down_pay: float
@@ -34,11 +66,16 @@ class Project:
     discount_rate: float
     builder_target_enpv: float
     owner_income: float
+    owner_target_enpv: float = None
     owner_threshold: float = None
     exact_results: ExactResults = field(default_factory=ExactResults)
     sim_results: SimResults = field(default_factory=SimResults)
     min_total_VaR: float = -1000000
     max_total_VaR: float = 0
+    lsOpt: bestLS = field(default_factory=bestLS)
+    lhOpt: bestLH = field(default_factory=bestLH)
+    cpOpt: bestCP = field(default_factory=bestCP)
+    tmOpt: bestTM = field(default_factory=bestTM)
 
 
 projects = []

@@ -6,7 +6,7 @@ from builder_risk import builder_risk
 from builder_enpv import builder_enpv
 from owner_risk import owner_risk
 from owner_enpv import owner_enpv
-from initialize import set_owner_threshold
+from initialize import initialize
 from builder_var import builder_var
 from owner_var import owner_var
 
@@ -46,7 +46,7 @@ def full_search(
     for proj in projects:
         log_file = full_header(proj, simulation)
         make_contracts(proj, proj.builder_target_enpv, distribution)
-        set_owner_threshold(proj, distribution)
+        initialize(proj, distribution)
         for cont in contracts:
             simulation and simulate(proj, cont, num_simulations, distribution, 0)
             exact_calculations(proj, cont, distribution, 0)

@@ -3,14 +3,16 @@ from contract import Contract
 from builder_risk import builder_risk
 
 
-def builder_var(project: Project, contract: Contract, distribution, target_probability):
+def builder_var(
+    project: Project, contract: Contract, distribution, target_probability
+) -> float:
     # Compute x_low and x_high
     x = 0
     prob = builder_risk(project, contract, distribution, x)
     if prob < target_probability:
         x_low = x
         while True:
-            x += project.builder_target_enpv / 2
+            x += abs(project.builder_target_enpv) / 2
             prob = builder_risk(project, contract, distribution, x)
             if prob > target_probability:
                 x_high = x
@@ -20,7 +22,7 @@ def builder_var(project: Project, contract: Contract, distribution, target_proba
     elif prob > target_probability:
         x_high = x
         while True:
-            x -= project.builder_target_enpv / 2
+            x -= abs(project.builder_target_enpv) / 2
             prob = builder_risk(project, contract, distribution, x)
             if prob < target_probability:
                 x_low = x
