@@ -8,6 +8,8 @@ from owner_enpv import owner_enpv
 from builder_var import builder_var
 from owner_var import owner_var
 
+min_safe_salary = 12
+
 
 def f(
     proj: Project,
@@ -25,12 +27,13 @@ def f(
             ),
             4,
         )
+        Smin = min(min_safe_salary, 0.01 * Smax)
         _, best_tvar = opt_contract_peakfinder(
             proj,
             cont,
             distribution,
             "lh",
-            0,
+            Smin,
             Smax,
             E,
         )
@@ -160,15 +163,15 @@ def opt_contract(
     if contclass == "cp" or contclass == "tm":
         x_min = 0.0
         x_max = 1.0
-
-    if contclass == "lh":
-        x_min = 0.0
+    elif contclass == "lh":
         x_max = round(
             calc_salary(
                 proj, proj.builder_target_enpv, cont.reimburse_rate, 0, distribution
             ),
             4,
         )
+        x_min = min(min_safe_salary, 0.01 * x_max)
+
     x, y = opt_contract_peakfinder(proj, cont, distribution, contclass, x_min, x_max, E)
     if contclass == "cp":
         cont.reimburse_rate = x
@@ -184,12 +187,13 @@ def opt_contract(
             ),
             4,
         )
+        Smin = min(min_safe_salary, 0.01 * Smax)
         cont.salary, _ = opt_contract_peakfinder(
             proj,
             cont,
             distribution,
             "lh",
-            0,
+            Smin,
             Smax,
             E,
         )
