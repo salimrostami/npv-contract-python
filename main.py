@@ -13,6 +13,7 @@ isSim = False
 isFullSearch = False
 isOptSearch = True
 E_percision = 0.000001
+min_safe_salary = 12
 
 
 def tm_sensitivity():
@@ -33,7 +34,7 @@ def tm_sensitivity():
             "TVaR",
             sep="\t",
         )
-        for nu in np.arange(0.89, 0.90, 0.01):
+        for nu in np.arange(0.0, 1.009, 0.01):
             cont.reimburse_rate = round(nu, 4)
             Smax = round(
                 calc_salary(
@@ -41,12 +42,13 @@ def tm_sensitivity():
                 ),
                 4,
             )
+            Smin = min(0.01 * Smax, min_safe_salary)
             best_salary, best_tvar = opt_contract_peakfinder(
                 proj,
                 cont,
                 distribution,
                 "lh",
-                0,
+                Smin,
                 Smax,
                 E_percision,
             )
@@ -125,7 +127,7 @@ def main():
     isFullSearch and full_search(distribution, isSim, simulationRounds)
     isOptSearch and opt_search(distribution, E_percision)
 
-    # tm_sensitivity()
+    tm_sensitivity()
 
     # simulate_contract(-5000, 0, 8, -6000, -1000)
     # previously 1364.2596592179357 # -19704.0699394 7.527561328125 9394
