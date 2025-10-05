@@ -12,9 +12,7 @@ def main():
     all_projects()
     params.isFullSearch and full_search()
     params.isOptSearch and opt_search()
-
-    tm_sensitivity()
-
+    params.isTmSense and tm_sensitivity()
     params.isDebug and debug_sim_contract(
         -5000,
         0,
@@ -22,7 +20,6 @@ def main():
         -6000,
         -1000,
     )
-    # previously 1364.2596592179357 # -19704.0699394 7.527561328125 9394
 
     cpu_elapsed = process_time() - start_cpu
     print(f"CPU time (process): {cpu_elapsed:.3f} s")

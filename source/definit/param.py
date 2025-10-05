@@ -9,8 +9,9 @@ class Params:
     isFullSearch: bool = False
     isOptSearch: bool = True
     isDebug: bool = False
-    ePrecision: float = 0.00001
-    roundPrecision: int = 5
+    isTmSense: bool = True
+    ePrecision: float = 0.0000001
+    roundPrecision: int = 7
     minSafeSalary: int = 12
 
 
@@ -22,6 +23,7 @@ params = Params()
 # isFullSearch=False,
 # isOptSearch=True,
 # isDebug=False,
-# ePrecision=0.00001,
-# roundPrecision=5,
+# isTmSense=True,
+# ePrecision=0.0000001,
+# roundPrecision=7,
 # minSafeSalary=12,

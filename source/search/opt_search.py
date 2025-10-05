@@ -8,6 +8,7 @@ from source.evaluate.builder.builder_var import builder_var
 from source.evaluate.owner.owner_var import owner_var
 import numpy as np
 from source.definit.param import params
+from source.utility.math_helpers import precise_round
 
 min_safe_salary = 12
 
@@ -72,24 +73,38 @@ def opt_contract_peakfinder(
     y_center = f(proj, cont, contclass, x_center)
 
     while (x_right - x_left) > params.ePrecision and min(
-        y_left, y_center, y_right
-    ) < max(y_left, y_center, y_right):
+        precise_round(y_left, params.roundPrecision),
+        precise_round(y_center, params.roundPrecision),
+        precise_round(y_right, params.roundPrecision),
+    ) < max(
+        precise_round(y_left, params.roundPrecision),
+        precise_round(y_center, params.roundPrecision),
+        precise_round(y_right, params.roundPrecision),
+    ):
         # Check the slope and determine the direction
-        if y_center >= y_left and y_center >= y_right:
+        if precise_round(y_center, params.roundPrecision) >= precise_round(
+            y_left, params.roundPrecision
+        ) and precise_round(y_center, params.roundPrecision) >= precise_round(
+            y_right, params.roundPrecision
+        ):
             # Local maximum found at the center
             # Halve the interval: keep the center half
             x_right = x_center + (x_right - x_center) / 2.0
             x_left = x_center - (x_center - x_left) / 2.0
             y_right = f(proj, cont, contclass, x_right)
             y_left = f(proj, cont, contclass, x_left)
-        elif y_right >= y_center and y_center >= y_left:
+        elif precise_round(y_right, params.roundPrecision) >= precise_round(
+            y_center, params.roundPrecision
+        ) and precise_round(y_center, params.roundPrecision) >= precise_round(
+            y_left, params.roundPrecision
+        ):
+            # uphill to the right
             # Check if we are at the boundary and still going uphill
             if x_right >= x_max:
                 x_left = x_center
                 x_center = (x_right + x_left) / 2.0
                 y_left = y_center
                 y_center = f(proj, cont, contclass, x_center)
-            # Move right if it's uphill to the right
             else:
                 x_left = x_center
                 x_right = min(x_max, x_right + (x_right - x_center))
@@ -102,14 +117,20 @@ def opt_contract_peakfinder(
                     x_right,
                 )
                 y_center = f(proj, cont, contclass, x_center)
-        elif y_left >= y_center and y_center >= y_right:
+        elif precise_round(y_left, params.roundPrecision) >= precise_round(
+            y_center, params.roundPrecision
+        ) and precise_round(y_center, params.roundPrecision) >= precise_round(
+            y_right, params.roundPrecision
+        ):
+            # downhill to the right
             # Check if we are at the boundary and still going uphill
-            if x_left <= x_min and y_left > y_center:
+            if precise_round(x_left, params.roundPrecision) <= precise_round(
+                x_min, params.roundPrecision
+            ):
                 x_right = x_center
                 x_center = (x_right + x_left) / 2.0
                 y_right = y_center
                 y_center = f(proj, cont, contclass, x_center)
-            # Move left if it's downhill to the right
             else:
                 x_right = x_center
                 x_left = max(x_min, x_left - (x_center - x_left))
@@ -252,7 +273,7 @@ def tm_sensitivity():
                 best_salary,
             )
             print(
-                f"{cont.reimburse_rate}",
+                f"{round(cont.reimburse_rate, 2)}",
                 f"{best_salary}",
                 f"{best_R}",
                 f"{best_tvar}",
