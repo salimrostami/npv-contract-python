@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import lambertw
+from decimal import Decimal, ROUND_HALF_UP
 
 
 def compute_lambert_w(z):
@@ -34,3 +35,8 @@ def build_interval(low, high):
         return (low, max(high, 0))
     else:
         raise ValueError("Invalid interval: low must be less than or equal to high.")
+
+
+def precise_round(value, decimals):
+    quant = Decimal("1e-" + str(decimals))
+    return Decimal(str(value)).quantize(quant, rounding=ROUND_HALF_UP)

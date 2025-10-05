@@ -1,3 +1,4 @@
+from source.definit.param import params
 from source.definit.project import Project
 import numpy as np
 
@@ -67,10 +68,10 @@ def calc_reward_uni(project: Project, target_b_enpv, nu, s):
     )
 
 
-def calc_reward(project, target_b_enpv, nu, s, distribution):
-    if distribution == "expo":
+def calc_reward(project, target_b_enpv, nu, s):
+    if params.dist == "expo":
         return calc_reward_expo(project, target_b_enpv, nu, s)
-    elif distribution == "uni":
+    elif params.dist == "uni":
         return calc_reward_uni(project, target_b_enpv, nu, s)
     else:
         raise ValueError("The 'distribution' argument must be 'expo' or 'uni'.")
@@ -118,29 +119,34 @@ def calc_salary_uni(project: Project, target_b_enpv, nu, R):
     )
 
 
-def calc_salary(project, target_b_enpv, nu, R, distribution):
-    if distribution == "expo":
+def calc_salary(
+    project,
+    target_b_enpv,
+    nu,
+    R,
+):
+    if params.dist == "expo":
         return calc_salary_expo(project, target_b_enpv, nu, R)
-    elif distribution == "uni":
+    elif params.dist == "uni":
         return calc_salary_uni(project, target_b_enpv, nu, R)
     else:
         raise ValueError("The 'distribution' argument must be 'expo' or 'uni'.")
 
 
-def make_contracts(project: Project, target_b_enpv, distribution):
+def make_contracts(project: Project, target_b_enpv):
     contracts.clear()
     counter = 0
     for nu in np.arange(0, 1.09, 0.1):
-        Rmax = round(calc_reward(project, target_b_enpv, nu, 0, distribution), 4)
-        Smax = round(calc_salary(project, target_b_enpv, nu, 0, distribution), 4)
+        Rmax = calc_reward(project, target_b_enpv, nu, 0, params.dist)
+        Smax = calc_salary(project, target_b_enpv, nu, 0, params.dist)
         for s in np.arange(0, 1.09, 0.1):
             try:
                 contracts.append(
                     Contract(
                         f"{(counter+1):03}",
-                        round(Rmax * (1 - s), 4),
-                        round(nu, 4),
-                        round(Smax * s, 4),
+                        Rmax * (1 - s),
+                        nu,
+                        Smax * s,
                         f"{round(nu, 2)}-{round(s, 2)}",
                     )
                 )

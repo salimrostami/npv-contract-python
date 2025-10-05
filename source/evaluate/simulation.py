@@ -3,6 +3,7 @@ from source.definit.initialize import initialize
 from source.definit.project import Project
 from source.definit.contract import Contract, calc_reward
 from source.evaluate.exact_eval import exact_calculations
+from source.definit.param import params
 
 
 def calc_builder_npv(project: Project, contract: Contract, random_c, random_t):
@@ -34,12 +35,10 @@ def calc_owner_npv(project: Project, contract: Contract, random_c, random_t):
 def simulate(
     project: Project,
     contract: Contract,
-    num_simulations,
-    distribution,
     builder_threshold_u: float,
 ):
     # Validate the distribution argument
-    if distribution not in ["uni", "expo"]:
+    if params.dist not in ["uni", "expo"]:
         raise ValueError(
             "The 'distribution' argument must " "be either 'uni' or 'expo'."
         )
@@ -48,11 +47,11 @@ def simulate(
     owner_npvs = []
     counter_builder_low_npv = 0
     counter_owner_low_npv = 0
-    for _ in range(num_simulations):
+    for _ in range(params.simRounds):
 
         # Simulate a project scenario
         random_c = np.random.uniform(project.c_uni_low_b, project.c_uni_high_a)
-        if distribution == "expo":
+        if params.dist == "expo":
             random_t = np.random.exponential(1 / project.d_expo_lambda)
         else:
             random_t = np.random.uniform(project.d_uni_low_l, project.d_uni_high_h)
@@ -76,19 +75,13 @@ def simulate(
     # print(builder_npvs)
     # print(owner_npvs)
 
-    builder_enpv = round(np.mean(builder_npvs), 4)  # expected npv over simulations
-    builder_risk = round(
-        float(100 * counter_builder_low_npv / num_simulations), 4
-    )  # low npv probability over simulations
-    builder_var = round(
-        np.percentile(builder_npvs, 5) - builder_enpv, 4
-    )  # VaR at 5% level
+    builder_enpv = np.mean(builder_npvs)
+    builder_risk = float(100 * counter_builder_low_npv / params.simRounds)
+    builder_var = np.percentile(builder_npvs, 5) - builder_enpv
 
-    owner_enpv = round(np.mean(owner_npvs), 4)  # expected npv over simulations
-    owner_risk = round(
-        float(100 * counter_owner_low_npv / num_simulations), 4
-    )  # low npv probability over simulations
-    owner_var = round(np.percentile(owner_npvs, 5) - owner_enpv, 4)  # VaR at 5% level
+    owner_enpv = np.mean(owner_npvs)
+    owner_risk = float(100 * counter_owner_low_npv / params.simRounds)
+    owner_var = np.percentile(owner_npvs, 5) - owner_enpv
 
     project.sim_results.builder.enpv = builder_enpv
     project.sim_results.builder.risk = builder_risk
@@ -98,32 +91,26 @@ def simulate(
     project.sim_results.owner.var = owner_var
 
 
-def debug_simulate_contract(
+def debug_sim_contract(
     cbar: float,
     nu: float,
     salary: float,
     bthresh: float,
     othresh: float,
-    distribution: str,
-    simulationRounds: int,
 ):
     proj = Project("sim-temp", cbar, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
     cont = Contract("sim-temp", 0, 0, 0, "tm-sense")
     cont.reimburse_rate = nu
     cont.salary = salary
-    cont.reward = round(
-        calc_reward(
-            proj,
-            proj.builder_target_enpv,
-            cont.reimburse_rate,
-            cont.salary,
-            distribution,
-        ),
-        6,
+    cont.reward = calc_reward(
+        proj,
+        proj.builder_target_enpv,
+        cont.reimburse_rate,
+        cont.salary,
     )
-    initialize(proj, distribution)
+    initialize(proj)
     # proj.owner_threshold = othresh
-    simulate(proj, cont, simulationRounds, distribution, bthresh)
+    simulate(proj, cont, bthresh)
     # Fixed-width table output for aligned columns
     hdr_fmt = "{:<16}{:<16}{:<16}{:<16}{:<16}"
     num_fmt = "{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}"
@@ -141,7 +128,7 @@ def debug_simulate_contract(
             float(proj.sim_results.builder.var + proj.sim_results.owner.var),
         )
     )
-    exact_calculations(proj, cont, distribution, bthresh)
+    exact_calculations(proj, cont, bthresh)
     print(
         num_fmt.format(
             float(proj.exact_results.builder.enpv),

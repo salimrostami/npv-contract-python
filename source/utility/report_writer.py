@@ -3,6 +3,7 @@ from source.definit.project import Project
 from datetime import datetime
 import os
 import atexit
+from source.definit.param import params
 
 
 def print_and_log(log_file, text: str):
@@ -90,7 +91,10 @@ def full_report(log_file, contract: Contract, project: Project, isSim: bool):
 
     # Always print the final rounded value.
     row.append(
-        round(project.exact_results.builder.var + project.exact_results.owner.var, 6)
+        round(
+            project.exact_results.builder.var + project.exact_results.owner.var,
+            params.roundPrecision,
+        )
     )
 
     print_and_log(log_file, "\t".join(f"{x:<9}" for x in row))

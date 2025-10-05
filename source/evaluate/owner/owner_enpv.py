@@ -1,6 +1,7 @@
 import numpy as np
 from source.definit.project import Project
 from source.definit.contract import Contract
+from source.definit.param import params
 
 
 def owner_enpv_expo(
@@ -44,10 +45,10 @@ def owner_enpv_uni(
     )
 
 
-def owner_enpv(project: Project, contract: Contract, distribution):
-    if distribution == "expo":
+def owner_enpv(project: Project, contract: Contract):
+    if params.dist == "expo":
         return owner_enpv_expo(project, contract)
-    elif distribution == "uni":
+    elif params.dist == "uni":
         return owner_enpv_uni(project, contract)
     else:
         raise ValueError("The 'distribution' argument must be either 'uni' or 'expo'.")

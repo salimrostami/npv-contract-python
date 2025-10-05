@@ -6,6 +6,7 @@ from source.utility.math_helpers import (
 )
 from source.definit.project import Project
 from source.definit.contract import Contract
+from source.definit.param import params
 
 
 def owner_calc_w_arg(project: Project, contract: Contract, x_ab, threshold_u):
@@ -19,15 +20,13 @@ def owner_calc_w_arg(project: Project, contract: Contract, x_ab, threshold_u):
         / contract.salary
     )
     # exp_result = np.exp(np.clip(exp_arg, -700, 700))
-    exp_result = np.float64(np.exp(exp_arg))
+    exp_result = np.exp(exp_arg)
 
     # limit = np.float64(1.0142320547350045e100)  # np.finfo(np.float64).max  # ~1.797e308
     # if abs(exp_result) > limit:
     #     exp_result = np.inf
 
-    w_arg = np.float64(
-        (project.discount_rate * threshold_u * exp_result / contract.salary)
-    )
+    w_arg = project.discount_rate * threshold_u * exp_result / contract.salary
 
     return w_arg if w_arg != np.inf else np.finfo(np.float64).max
 
@@ -252,10 +251,10 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
     return risk
 
 
-def owner_risk(project: Project, contract: Contract, distribution, threshold_u):
-    if distribution == "expo":
+def owner_risk(project: Project, contract: Contract, threshold_u):
+    if params.dist == "expo":
         return owner_risk_expo(project, contract, threshold_u)
-    elif distribution == "uni":
+    elif params.dist == "uni":
         return owner_risk_uni(project, contract, threshold_u)
     else:
         raise ValueError("The 'distribution' argument must be either 'uni' or 'expo'.")

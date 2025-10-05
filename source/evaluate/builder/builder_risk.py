@@ -6,6 +6,7 @@ from source.utility.math_helpers import (
 )
 from source.definit.project import Project
 from source.definit.contract import Contract
+from source.definit.param import params
 
 
 def builder_calc_w_arg(project: Project, contract: Contract, x, threshold_u):
@@ -268,10 +269,10 @@ def builder_risk_uni(project: Project, contract: Contract, threshold_u):
     return risk
 
 
-def builder_risk(project: Project, contract: Contract, distribution, threshold_u):
-    if distribution == "expo":
+def builder_risk(project: Project, contract: Contract, threshold_u):
+    if params.dist == "expo":
         return builder_risk_expo(project, contract, threshold_u)
-    elif distribution == "uni":
+    elif params.dist == "uni":
         return builder_risk_uni(project, contract, threshold_u)
     else:
         raise ValueError("The 'distribution' argument must be either 'uni' or 'expo'.")

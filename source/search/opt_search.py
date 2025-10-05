@@ -7,6 +7,7 @@ from source.evaluate.owner.owner_enpv import owner_enpv
 from source.evaluate.builder.builder_var import builder_var
 from source.evaluate.owner.owner_var import owner_var
 import numpy as np
+from source.definit.param import params
 
 min_safe_salary = 12
 
@@ -14,28 +15,19 @@ min_safe_salary = 12
 def f(
     proj: Project,
     cont: Contract,
-    distribution: str,
     contclass: str,
     x: float,
-    E: float,
 ) -> float:
     if contclass == "tm":
         cont.reimburse_rate = x
-        Smax = round(
-            calc_salary(
-                proj, proj.builder_target_enpv, cont.reimburse_rate, 0, distribution
-            ),
-            4,
-        )
+        Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
         Smin = min(min_safe_salary, 0.01 * Smax)
         _, best_tvar = opt_contract_peakfinder(
             proj,
             cont,
-            distribution,
             "lh",
             Smin,
             Smax,
-            E,
         )
         return best_tvar
     if contclass == "cp":
@@ -43,22 +35,18 @@ def f(
     if contclass == "lh":
         cont.salary = x
 
-    cont.reward = round(
-        calc_reward(
-            proj,
-            proj.builder_target_enpv,
-            cont.reimburse_rate,
-            cont.salary,
-            distribution,
-        ),
-        6,
+    cont.reward = calc_reward(
+        proj,
+        proj.builder_target_enpv,
+        cont.reimburse_rate,
+        cont.salary,
     )
 
-    benpv = round(builder_enpv(proj, cont, distribution), 6)
-    oenpv = round(owner_enpv(proj, cont, distribution), 6)
+    benpv = builder_enpv(proj, cont)
+    oenpv = owner_enpv(proj, cont)
 
-    bvar = round(builder_var(proj, cont, distribution, 0.05) - benpv, 7)
-    ovar = round(owner_var(proj, cont, distribution, 0.05) - oenpv, 7)
+    bvar = builder_var(proj, cont, 0.05) - benpv
+    ovar = owner_var(proj, cont, 0.05) - oenpv
 
     return bvar + ovar
 
@@ -66,11 +54,9 @@ def f(
 def opt_contract_peakfinder(
     proj: Project,
     cont: Contract,
-    distribution: str,
     contclass: str,
     x_min: float,
     x_max: float,
-    E: float,
 ) -> Tuple[float, float]:
 
     # Initial boundaries
@@ -81,28 +67,28 @@ def opt_contract_peakfinder(
     #     x_center = 0.7891697883605957
 
     # Evaluate initial points
-    y_left = f(proj, cont, distribution, contclass, x_left, E)
-    y_right = f(proj, cont, distribution, contclass, x_right, E)
-    y_center = f(proj, cont, distribution, contclass, x_center, E)
+    y_left = f(proj, cont, contclass, x_left)
+    y_right = f(proj, cont, contclass, x_right)
+    y_center = f(proj, cont, contclass, x_center)
 
-    while (x_right - x_left) > E and min(y_left, y_center, y_right) < max(
+    while (x_right - x_left) > params.ePrecision and min(
         y_left, y_center, y_right
-    ):
+    ) < max(y_left, y_center, y_right):
         # Check the slope and determine the direction
         if y_center >= y_left and y_center >= y_right:
             # Local maximum found at the center
             # Halve the interval: keep the center half
             x_right = x_center + (x_right - x_center) / 2.0
             x_left = x_center - (x_center - x_left) / 2.0
-            y_right = f(proj, cont, distribution, contclass, x_right, E)
-            y_left = f(proj, cont, distribution, contclass, x_left, E)
+            y_right = f(proj, cont, contclass, x_right)
+            y_left = f(proj, cont, contclass, x_left)
         elif y_right >= y_center and y_center >= y_left:
             # Check if we are at the boundary and still going uphill
             if x_right >= x_max:
                 x_left = x_center
                 x_center = (x_right + x_left) / 2.0
                 y_left = y_center
-                y_center = f(proj, cont, distribution, contclass, x_center, E)
+                y_center = f(proj, cont, contclass, x_center)
             # Move right if it's uphill to the right
             else:
                 x_left = x_center
@@ -112,27 +98,25 @@ def opt_contract_peakfinder(
                 y_right = f(
                     proj,
                     cont,
-                    distribution,
                     contclass,
                     x_right,
-                    E,
                 )
-                y_center = f(proj, cont, distribution, contclass, x_center, E)
+                y_center = f(proj, cont, contclass, x_center)
         elif y_left >= y_center and y_center >= y_right:
             # Check if we are at the boundary and still going uphill
             if x_left <= x_min and y_left > y_center:
                 x_right = x_center
                 x_center = (x_right + x_left) / 2.0
                 y_right = y_center
-                y_center = f(proj, cont, distribution, contclass, x_center, E)
+                y_center = f(proj, cont, contclass, x_center)
             # Move left if it's downhill to the right
             else:
                 x_right = x_center
                 x_left = max(x_min, x_left - (x_center - x_left))
                 x_center = (x_right + x_left) / 2.0
                 y_right = y_center
-                y_left = f(proj, cont, distribution, contclass, x_left, E)
-                y_center = f(proj, cont, distribution, contclass, x_center, E)
+                y_left = f(proj, cont, contclass, x_left)
+                y_center = f(proj, cont, contclass, x_center)
         else:
             # This case should not happen if the function is well-behaved
             print("Unexpected behavior detected.")
@@ -149,9 +133,7 @@ def opt_contract_peakfinder(
 
 def opt_contract(
     proj: Project,
-    distribution: str,
     contclass: str,
-    E: float,
 ) -> Tuple[float, Contract]:
     cont = Contract(
         "optcont",
@@ -164,15 +146,10 @@ def opt_contract(
         x_min = 0.0
         x_max = 1.0
     elif contclass == "lh":
-        x_max = round(
-            calc_salary(
-                proj, proj.builder_target_enpv, cont.reimburse_rate, 0, distribution
-            ),
-            4,
-        )
+        x_max = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
         x_min = min(min_safe_salary, 0.01 * x_max)
 
-    x, y = opt_contract_peakfinder(proj, cont, distribution, contclass, x_min, x_max, E)
+    x, y = opt_contract_peakfinder(proj, cont, contclass, x_min, x_max)
     if contclass == "cp":
         cont.reimburse_rate = x
         cont.salary = 0
@@ -181,44 +158,33 @@ def opt_contract(
         cont.reimburse_rate = 0
     elif contclass == "tm":
         cont.reimburse_rate = x
-        Smax = round(
-            calc_salary(
-                proj, proj.builder_target_enpv, cont.reimburse_rate, 0, distribution
-            ),
-            4,
-        )
+        Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
         Smin = min(min_safe_salary, 0.01 * Smax)
         cont.salary, _ = opt_contract_peakfinder(
             proj,
             cont,
-            distribution,
             "lh",
             Smin,
             Smax,
-            E,
         )
     else:
         raise ValueError("Invalid contract class. Choose 'cp', 'lh', or 'tm'.")
 
-    cont.reward = round(
-        calc_reward(
-            proj,
-            proj.builder_target_enpv,
-            cont.reimburse_rate,
-            cont.salary,
-            distribution,
-        ),
-        6,
+    cont.reward = calc_reward(
+        proj,
+        proj.builder_target_enpv,
+        cont.reimburse_rate,
+        cont.salary,
     )
 
     return y, cont
 
 
-def opt_search(distribution: str, E: float):
+def opt_search():
     proj: Project
     for proj in projects:
-        initialize(proj, distribution)  # sets lsBase and owner_threshold
-        proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, distribution, "cp", E)
+        initialize(proj)  # sets lsBase and owner_threshold
+        proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
         print(
             (
                 f"Project {proj.proj_id} optimized CP contract: "
@@ -228,7 +194,7 @@ def opt_search(distribution: str, E: float):
                 f"Total VaR = {proj.cpOpt.tvar}"
             )
         )
-        proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, distribution, "lh", E)
+        proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
         print(
             (
                 f"Project {proj.proj_id} optimized LH contract: "
@@ -238,7 +204,7 @@ def opt_search(distribution: str, E: float):
                 f"Total VaR = {proj.lhOpt.tvar}"
             )
         )
-        proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, distribution, "tm", E)
+        proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
         print(
             (
                 f"Project {proj.proj_id} optimized TM contract: "
@@ -250,10 +216,10 @@ def opt_search(distribution: str, E: float):
         )
 
 
-def tm_sensitivity(distribution: str, E: float):
+def tm_sensitivity():
     proj: Project
     for proj in projects:
-        initialize(proj, distribution)
+        initialize(proj)
         cont = Contract(
             "tm-sense",
             0,
@@ -269,32 +235,21 @@ def tm_sensitivity(distribution: str, E: float):
             sep="\t",
         )
         for nu in np.arange(0.0, 1.009, 0.01):
-            cont.reimburse_rate = round(nu, 4)
-            Smax = round(
-                calc_salary(
-                    proj, proj.builder_target_enpv, cont.reimburse_rate, 0, distribution
-                ),
-                4,
-            )
+            cont.reimburse_rate = nu
+            Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
             Smin = min(0.01 * Smax, min_safe_salary)
             best_salary, best_tvar = opt_contract_peakfinder(
                 proj,
                 cont,
-                distribution,
                 "lh",
                 Smin,
                 Smax,
-                E,
             )
-            best_R = round(
-                calc_reward(
-                    proj,
-                    proj.builder_target_enpv,
-                    cont.reimburse_rate,
-                    best_salary,
-                    distribution,
-                ),
-                6,
+            best_R = calc_reward(
+                proj,
+                proj.builder_target_enpv,
+                cont.reimburse_rate,
+                best_salary,
             )
             print(
                 f"{cont.reimburse_rate}",

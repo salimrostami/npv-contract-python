@@ -1,6 +1,7 @@
 import numpy as np
 from source.definit.project import Project
 from source.definit.contract import Contract
+from source.definit.param import params
 
 
 def builder_enpv_expo(
@@ -58,10 +59,10 @@ def builder_enpv_uni(
     )
 
 
-def builder_enpv(project: Project, contract: Contract, distribution):
-    if distribution == "expo":
+def builder_enpv(project: Project, contract: Contract):
+    if params.dist == "expo":
         return builder_enpv_expo(project, contract)
-    elif distribution == "uni":
+    elif params.dist == "uni":
         return builder_enpv_uni(project, contract)
     else:
         raise ValueError("The 'distribution' argument must be either 'uni' or 'expo'.")
