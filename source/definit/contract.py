@@ -1,4 +1,4 @@
-from project import Project
+from source.definit.project import Project
 import numpy as np
 
 

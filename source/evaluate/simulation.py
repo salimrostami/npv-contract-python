@@ -1,6 +1,8 @@
 import numpy as np
-from project import Project
-from contract import Contract
+from source.definit.initialize import initialize
+from source.definit.project import Project
+from source.definit.contract import Contract, calc_reward
+from source.evaluate.exact_eval import exact_calculations
 
 
 def calc_builder_npv(project: Project, contract: Contract, random_c, random_t):
@@ -94,3 +96,58 @@ def simulate(
     project.sim_results.owner.enpv = owner_enpv
     project.sim_results.owner.risk = owner_risk
     project.sim_results.owner.var = owner_var
+
+
+def debug_simulate_contract(
+    cbar: float,
+    nu: float,
+    salary: float,
+    bthresh: float,
+    othresh: float,
+    distribution: str,
+    simulationRounds: int,
+):
+    proj = Project("sim-temp", cbar, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
+    cont = Contract("sim-temp", 0, 0, 0, "tm-sense")
+    cont.reimburse_rate = nu
+    cont.salary = salary
+    cont.reward = round(
+        calc_reward(
+            proj,
+            proj.builder_target_enpv,
+            cont.reimburse_rate,
+            cont.salary,
+            distribution,
+        ),
+        6,
+    )
+    initialize(proj, distribution)
+    # proj.owner_threshold = othresh
+    simulate(proj, cont, simulationRounds, distribution, bthresh)
+    # Fixed-width table output for aligned columns
+    hdr_fmt = "{:<16}{:<16}{:<16}{:<16}{:<16}"
+    num_fmt = "{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}"
+    print(
+        hdr_fmt.format(
+            "Builder enpv", "Owner enpv", "Builder risk", "Owner risk", "total VaR"
+        )
+    )
+    print(
+        num_fmt.format(
+            float(proj.sim_results.builder.enpv),
+            float(proj.sim_results.owner.enpv),
+            float(proj.sim_results.builder.risk),
+            float(proj.sim_results.owner.risk),
+            float(proj.sim_results.builder.var + proj.sim_results.owner.var),
+        )
+    )
+    exact_calculations(proj, cont, distribution, bthresh)
+    print(
+        num_fmt.format(
+            float(proj.exact_results.builder.enpv),
+            float(proj.exact_results.owner.enpv),
+            float(proj.exact_results.builder.risk),
+            float(proj.exact_results.owner.risk),
+            float(proj.exact_results.builder.var + proj.exact_results.owner.var),
+        )
+    )

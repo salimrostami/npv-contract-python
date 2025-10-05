@@ -1,7 +1,11 @@
 import numpy as np
-from math_helpers import build_interval, compute_lambert_w, get_common_interval
-from project import Project
-from contract import Contract
+from source.utility.math_helpers import (
+    build_interval,
+    compute_lambert_w,
+    get_common_interval,
+)
+from source.definit.project import Project
+from source.definit.contract import Contract
 
 
 def owner_calc_w_arg(project: Project, contract: Contract, x_ab, threshold_u):

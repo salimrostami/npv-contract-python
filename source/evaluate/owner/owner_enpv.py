@@ -1,6 +1,6 @@
 import numpy as np
-from project import Project
-from contract import Contract
+from source.definit.project import Project
+from source.definit.contract import Contract
 
 
 def owner_enpv_expo(

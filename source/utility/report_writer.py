@@ -1,5 +1,5 @@
-from contract import Contract
-from project import Project
+from source.definit.contract import Contract
+from source.definit.project import Project
 from datetime import datetime
 import os
 import atexit

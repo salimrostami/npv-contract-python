@@ -1,19 +1,17 @@
-from project import Project
-from contract import Contract
-from builder_risk import builder_risk
+from source.definit.project import Project
+from source.definit.contract import Contract
+from source.evaluate.owner.owner_risk import owner_risk
 
 
-def builder_var(
-    project: Project, contract: Contract, distribution, target_probability
-) -> float:
+def owner_var(project: Project, contract: Contract, distribution, target_probability):
     # Compute x_low and x_high
-    x = 0
-    prob = builder_risk(project, contract, distribution, x)
+    x = project.owner_threshold
+    prob = owner_risk(project, contract, distribution, x)
     if prob < target_probability:
         x_low = x
         while True:
-            x += abs(project.builder_target_enpv) / 2
-            prob = builder_risk(project, contract, distribution, x)
+            x += abs(project.owner_target_enpv) / 10
+            prob = owner_risk(project, contract, distribution, x)
             if prob > target_probability:
                 x_high = x
                 break
@@ -22,8 +20,8 @@ def builder_var(
     elif prob > target_probability:
         x_high = x
         while True:
-            x -= abs(project.builder_target_enpv) / 2
-            prob = builder_risk(project, contract, distribution, x)
+            x -= abs(project.owner_target_enpv) / 10
+            prob = owner_risk(project, contract, distribution, x)
             if prob < target_probability:
                 x_low = x
                 break
@@ -50,7 +48,7 @@ def binary_search_var(
 ):
     while x_high - x_low > tol:
         x_mid = (x_low + x_high) / 2
-        prob = builder_risk(project, contract, distribution, x_mid)
+        prob = owner_risk(project, contract, distribution, x_mid)
         if prob < target_probability:
             x_low = x_mid
         elif prob > target_probability:

@@ -1,12 +1,12 @@
 from typing import Tuple
-from contract import Contract, calc_salary
-from initialize import initialize
-from project import Project, projects
-from contract import calc_reward
-from builder_enpv import builder_enpv
-from owner_enpv import owner_enpv
-from builder_var import builder_var
-from owner_var import owner_var
+from source.definit.contract import Contract, calc_salary, calc_reward
+from source.definit.initialize import initialize
+from source.definit.project import Project, projects
+from source.evaluate.builder.builder_enpv import builder_enpv
+from source.evaluate.owner.owner_enpv import owner_enpv
+from source.evaluate.builder.builder_var import builder_var
+from source.evaluate.owner.owner_var import owner_var
+import numpy as np
 
 min_safe_salary = 12
 
@@ -248,3 +248,58 @@ def opt_search(distribution: str, E: float):
                 f"Total VaR = {proj.tmOpt.tvar}"
             )
         )
+
+
+def tm_sensitivity(distribution: str, E: float):
+    proj: Project
+    for proj in projects:
+        initialize(proj, distribution)
+        cont = Contract(
+            "tm-sense",
+            0,
+            0,
+            0,
+            "tm-sense",
+        )
+        print(
+            "nu",
+            "Salary",
+            "Reward",
+            "TVaR",
+            sep="\t",
+        )
+        for nu in np.arange(0.0, 1.009, 0.01):
+            cont.reimburse_rate = round(nu, 4)
+            Smax = round(
+                calc_salary(
+                    proj, proj.builder_target_enpv, cont.reimburse_rate, 0, distribution
+                ),
+                4,
+            )
+            Smin = min(0.01 * Smax, min_safe_salary)
+            best_salary, best_tvar = opt_contract_peakfinder(
+                proj,
+                cont,
+                distribution,
+                "lh",
+                Smin,
+                Smax,
+                E,
+            )
+            best_R = round(
+                calc_reward(
+                    proj,
+                    proj.builder_target_enpv,
+                    cont.reimburse_rate,
+                    best_salary,
+                    distribution,
+                ),
+                6,
+            )
+            print(
+                f"{cont.reimburse_rate}",
+                f"{best_salary}",
+                f"{best_R}",
+                f"{best_tvar}",
+                sep="\t",
+            )
