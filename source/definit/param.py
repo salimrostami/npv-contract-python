@@ -9,7 +9,7 @@ class Params:
     isFullSearch: bool = False
     isOptSearch: bool = True
     isDebug: bool = False
-    isTmSense: bool = False
+    isTmSense: bool = True
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
     minSafeSalary: int = 12

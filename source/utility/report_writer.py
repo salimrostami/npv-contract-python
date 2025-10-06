@@ -1,5 +1,6 @@
+from pyparsing import TextIO
 from source.definit.contract import Contract
-from source.definit.project import Project, bestContract
+from source.definit.project import ExactResults, Project, bestContract
 from datetime import datetime
 import os
 import atexit
@@ -8,7 +9,7 @@ from source.definit.param import params
 # from source.utility.math_helpers import precise_round
 
 
-def print_and_log(log_file, text: str):
+def print_and_log(log_file: TextIO, text: str):
     """Helper to print to console and log to file."""
     print(text)
     log_file.write(text + "\n")
@@ -56,15 +57,17 @@ def full_header(project: Project):
 
     # Update file path to use the 'reports' directory
     file_path = os.path.join(reports_dir, file_name)
+    log_file: TextIO
+    # create the file_path file and open it in write mode
     log_file = open(file_path, "w")
 
     # print_and_log(log_file, "\n")
-    print_and_log(log_file, "\t".join(f"{x:<9}" for x in heads))
+    print_and_log(log_file, "\t".join(f"{x:<10}" for x in heads))
 
     return log_file
 
 
-def full_report(project: Project, contract: Contract, log_file):
+def full_report(project: Project, contract: Contract, log_file: TextIO):
     # Always printed items
     row = [
         contract.type,
@@ -102,7 +105,7 @@ def full_report(project: Project, contract: Contract, log_file):
         )
     )
 
-    print_and_log(log_file, "\t".join(f"{x:<9}" for x in row))
+    print_and_log(log_file, "\t".join(f"{x:<10}" for x in row))
     atexit.register(log_file.close)
 
 
@@ -144,6 +147,7 @@ def opt_header():
     file_name = "~opt_report.txt"
     file_path = os.path.join(reports_dir, file_name)
 
+    log_file: TextIO
     # check if opt_report file already exists, if so, open it in append mode
     if os.path.exists(file_path):
         # open in append mode
@@ -194,7 +198,7 @@ def _fmt_line(values):
     return "\t".join("" if x is None else f"{x:<10}" for x in values)
 
 
-def opt_report(project: Project, log_file):
+def opt_report(project: Project, log_file: TextIO):
     common = _build_common_row(project)
     rp = params.roundPrecision
 
@@ -203,4 +207,63 @@ def opt_report(project: Project, log_file):
         line = _fmt_line(common + _build_opt_row(opt, rp))
         print_and_log(log_file, line)
 
+    atexit.register(log_file.close)
+
+
+def sens_header(project: Project, name: str):
+    heads = [
+        "type",
+        "reward",
+        "rate",
+        "salary",
+        "B_ENPV",
+        "O_ENPV",
+        "B_Risk",
+        "O_Risk",
+        "B_VaR",
+        "O_VaR",
+        "T_VaR",
+    ]
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"{timestamp}-P{project.proj_id}-{name}.txt"
+
+    # Ensure the 'reports' directory exists
+    root_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(__file__))
+    )  # Go up one level
+    reports_dir = os.path.join(root_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    # Update file path to use the 'reports' directory
+    file_path = os.path.join(reports_dir, file_name)
+    log_file: TextIO
+    # create the file_path file and open it in write mode
+    log_file = open(file_path, "w")
+
+    # print_and_log(log_file, "\n")
+    print_and_log(log_file, "\t".join("" if x is None else f"{x:<10}" for x in heads))
+
+    return log_file
+
+
+def sens_report(cont: Contract, res: ExactResults, log_file: TextIO):
+    rp = params.roundPrecision
+    r = round  # tiny alias
+    # Always printed items
+    row = [
+        cont.type,
+        r(cont.reward, rp),
+        r(cont.reimburse_rate, rp),
+        r(cont.salary, rp),
+        r(res.builder.enpv, rp),
+        r(res.owner.enpv, rp),
+        r(res.builder.risk, rp),
+        r(res.owner.risk, rp),
+        r(res.builder.var, rp),
+        r(res.owner.var, rp),
+        r(res.builder.var + res.owner.var, rp),
+    ]
+
+    print_and_log(log_file, "\t".join("" if x is None else f"{x:<10}" for x in row))
     atexit.register(log_file.close)

@@ -6,13 +6,10 @@ from source.evaluate.builder.builder_enpv import builder_enpv
 from source.evaluate.owner.owner_enpv import owner_enpv
 from source.evaluate.builder.builder_var import builder_var
 from source.evaluate.owner.owner_var import owner_var
-import numpy as np
 from source.definit.param import params
 from source.utility.math_helpers import precise_round
 from source.utility.report_writer import opt_header, opt_report
 from source.evaluate.exact_eval import exact_calculations
-
-min_safe_salary = 12
 
 
 def f(
@@ -24,7 +21,7 @@ def f(
     if contclass == "tm":
         cont.reimburse_rate = x
         Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-        Smin = min(min_safe_salary, 0.01 * Smax)
+        Smin = min(params.minSafeSalary, 0.01 * Smax)
         _, best_tvar = opt_contract_peakfinder(
             proj,
             cont,
@@ -181,7 +178,7 @@ def opt_contract(
         x_max = 1.0
     elif contclass == "lh":
         x_max = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-        x_min = min(min_safe_salary, 0.01 * x_max)
+        x_min = min(params.minSafeSalary, 0.01 * x_max)
 
     x, y = opt_contract_peakfinder(proj, cont, contclass, x_min, x_max)
     if contclass == "cp":
@@ -193,7 +190,7 @@ def opt_contract(
     elif contclass == "tm":
         cont.reimburse_rate = x
         Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-        Smin = min(min_safe_salary, 0.01 * Smax)
+        Smin = min(params.minSafeSalary, 0.01 * Smax)
         cont.salary, _ = opt_contract_peakfinder(
             proj,
             cont,
@@ -287,47 +284,3 @@ def opt_search():
             )
         )
     opt_report(proj, log_file)
-
-
-def tm_sensitivity():
-    proj: Project
-    for proj in projects:
-        initialize(proj)
-        cont = Contract(
-            "tm-sense",
-            0,
-            0,
-            0,
-            "tm-sense",
-        )
-        print(
-            "nu",
-            "Salary",
-            "Reward",
-            "TVaR",
-            sep="\t",
-        )
-        for nu in np.arange(0.0, 1.009, 0.01):
-            cont.reimburse_rate = nu
-            Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-            Smin = min(0.01 * Smax, min_safe_salary)
-            best_salary, best_tvar = opt_contract_peakfinder(
-                proj,
-                cont,
-                "lh",
-                Smin,
-                Smax,
-            )
-            best_R = calc_reward(
-                proj,
-                proj.builder_target_enpv,
-                cont.reimburse_rate,
-                best_salary,
-            )
-            print(
-                f"{round(cont.reimburse_rate, 2)}",
-                f"{best_salary}",
-                f"{best_R}",
-                f"{round(best_tvar, params.roundPrecision)}",
-                sep="\t",
-            )
