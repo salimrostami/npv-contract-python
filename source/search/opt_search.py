@@ -31,10 +31,12 @@ def f(
             Smax,
         )
         return best_tvar
-    if contclass == "cp":
+    elif contclass == "cp":
         cont.reimburse_rate = x
-    if contclass == "lh":
+    elif contclass == "lh":
         cont.salary = x
+    else:
+        raise ValueError("Invalid contract class. Choose 'cp', 'lh', or 'tm'.")
 
     cont.reward = calc_reward(
         proj,
@@ -59,6 +61,14 @@ def opt_contract_peakfinder(
     x_min: float,
     x_max: float,
 ) -> Tuple[float, float]:
+
+    if contclass == "lh":
+        y_s0 = f(proj, cont, contclass, 0)
+        y_smin = f(proj, cont, contclass, x_min)
+        if precise_round(y_s0, params.roundPrecision) > precise_round(
+            y_smin, params.roundPrecision
+        ):
+            return 0, y_s0
 
     # Initial boundaries
     x_left = x_min
@@ -212,7 +222,7 @@ def opt_search():
                 f"Reimburse Rate = {proj.cpOpt.contract.reimburse_rate}, "
                 f"Salary = {proj.cpOpt.contract.salary}, "
                 f"Reward = {proj.cpOpt.contract.reward}, "
-                f"Total VaR = {proj.cpOpt.tvar}"
+                f"Total VaR = {precise_round(proj.cpOpt.tvar, params.roundPrecision)}"
             )
         )
         proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
@@ -222,7 +232,7 @@ def opt_search():
                 f"Reimburse Rate = {proj.lhOpt.contract.reimburse_rate}, "
                 f"Salary = {proj.lhOpt.contract.salary}, "
                 f"Reward = {proj.lhOpt.contract.reward}, "
-                f"Total VaR = {proj.lhOpt.tvar}"
+                f"Total VaR = {precise_round(proj.lhOpt.tvar, params.roundPrecision)}"
             )
         )
         proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
@@ -232,7 +242,7 @@ def opt_search():
                 f"Reimburse Rate = {proj.tmOpt.contract.reimburse_rate}, "
                 f"Salary = {proj.tmOpt.contract.salary}, "
                 f"Reward = {proj.tmOpt.contract.reward}, "
-                f"Total VaR = {proj.tmOpt.tvar}"
+                f"Total VaR = {precise_round(proj.tmOpt.tvar, params.roundPrecision)}"
             )
         )
 
@@ -276,6 +286,6 @@ def tm_sensitivity():
                 f"{round(cont.reimburse_rate, 2)}",
                 f"{best_salary}",
                 f"{best_R}",
-                f"{best_tvar}",
+                f"{round(best_tvar, params.roundPrecision)}",
                 sep="\t",
             )
