@@ -1,6 +1,11 @@
 # Description: This file contains the Project class which is used to store
 # the project details. The Project class has the following attributes:
 from dataclasses import dataclass, field
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Only imported for type checking to avoid runtime circular imports
+    from source.definit.contract import Contract
 
 
 @dataclass
@@ -24,7 +29,7 @@ class SimResults:
 
 @dataclass
 class bestContract:
-    contract: any = None
+    contract: Optional["Contract"] = None
     tvar: float = None
     builder: Result = field(default_factory=Result)
     owner: Result = field(default_factory=Result)

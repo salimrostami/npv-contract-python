@@ -5,14 +5,14 @@ from source.evaluate.builder.builder_enpv import builder_enpv
 from source.evaluate.owner.owner_enpv import owner_enpv
 from source.evaluate.owner.owner_risk import owner_risk
 from source.evaluate.owner.owner_var import owner_var
-from source.definit.project import Project, ExactResults
+from source.definit.project import Project, Result
 
 
 def exact_calculations(
     proj: Project,
     cont: Contract,
-    b_results: ExactResults,
-    o_results: ExactResults,
+    b_results: Result,
+    o_results: Result,
     builder_threshold_u: int,
 ):
     b_results.enpv = builder_enpv(proj, cont)

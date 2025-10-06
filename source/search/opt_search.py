@@ -175,6 +175,7 @@ def opt_contract(
         0,
         "---",
     )
+    cont.type = contclass
     if contclass == "cp" or contclass == "tm":
         x_min = 0.0
         x_max = 1.0

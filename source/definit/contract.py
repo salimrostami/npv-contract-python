@@ -131,25 +131,3 @@ def calc_salary(
         return calc_salary_uni(project, target_b_enpv, nu, R)
     else:
         raise ValueError("The 'distribution' argument must be 'expo' or 'uni'.")
-
-
-def make_contracts(project: Project, target_b_enpv):
-    contracts.clear()
-    counter = 0
-    for nu in np.arange(0, 1.09, 0.1):
-        Rmax = calc_reward(project, target_b_enpv, nu, 0, params.dist)
-        Smax = calc_salary(project, target_b_enpv, nu, 0, params.dist)
-        for s in np.arange(0, 1.09, 0.1):
-            try:
-                contracts.append(
-                    Contract(
-                        f"{(counter+1):03}",
-                        Rmax * (1 - s),
-                        nu,
-                        Smax * s,
-                        f"{round(nu, 2)}-{round(s, 2)}",
-                    )
-                )
-                counter += 1
-            except ValueError as e:
-                print(e)

@@ -1,5 +1,5 @@
 from source.definit.contract import Contract
-from source.definit.project import Project
+from source.definit.project import Project, bestContract
 from datetime import datetime
 import os
 import atexit
@@ -157,9 +157,8 @@ def opt_header():
     return log_file
 
 
-def opt_report(project: Project, log_file):
-    # print the opt report to opt_report.txt file
-    common_row = [
+def _build_common_row(project: Project):
+    return [
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         project.proj_id,
         project.c_down_pay,
@@ -170,76 +169,38 @@ def opt_report(project: Project, log_file):
         project.discount_rate,
         project.builder_target_enpv,
         project.owner_income,
-        project.owner_target_enpv,
-        project.owner_threshold,
-    ]
-    ls_row = [
-        project.lsOpt.contract.type,
-        round(project.lsOpt.contract.reward, params.roundPrecision),
-        round(project.lsOpt.contract.reimburse_rate, params.roundPrecision),
-        round(project.lsOpt.contract.salary, params.roundPrecision),
-        round(project.lsOpt.builder.enpv, params.roundPrecision),
-        round(project.lsOpt.owner.enpv, params.roundPrecision),
-        round(project.lsOpt.builder.risk, params.roundPrecision),
-        round(project.lsOpt.owner.risk, params.roundPrecision),
-        round(project.lsOpt.builder.var, params.roundPrecision),
-        round(project.lsOpt.owner.var, params.roundPrecision),
-        round(project.lsOpt.tvar, params.roundPrecision),
-    ]
-    cp_row = [
-        project.cpOpt.contract.type,
-        round(project.cpOpt.contract.reward, params.roundPrecision),
-        round(project.cpOpt.contract.reimburse_rate, params.roundPrecision),
-        round(project.cpOpt.contract.salary, params.roundPrecision),
-        round(project.cpOpt.builder.enpv, params.roundPrecision),
-        round(project.cpOpt.owner.enpv, params.roundPrecision),
-        round(project.cpOpt.builder.risk, params.roundPrecision),
-        round(project.cpOpt.owner.risk, params.roundPrecision),
-        round(project.cpOpt.builder.var, params.roundPrecision),
-        round(project.cpOpt.owner.var, params.roundPrecision),
-        round(project.cpOpt.tvar, params.roundPrecision),
-    ]
-    lh_row = [
-        project.lhOpt.contract.type,
-        round(project.lhOpt.contract.reward, params.roundPrecision),
-        round(project.lhOpt.contract.reimburse_rate, params.roundPrecision),
-        round(project.lhOpt.contract.salary, params.roundPrecision),
-        round(project.lhOpt.builder.enpv, params.roundPrecision),
-        round(project.lhOpt.owner.enpv, params.roundPrecision),
-        round(project.lhOpt.builder.risk, params.roundPrecision),
-        round(project.lhOpt.owner.risk, params.roundPrecision),
-        round(project.lhOpt.builder.var, params.roundPrecision),
-        round(project.lhOpt.owner.var, params.roundPrecision),
-        round(project.lhOpt.tvar, params.roundPrecision),
-    ]
-    tm_row = [
-        project.tmOpt.contract.type,
-        round(project.tmOpt.contract.reward, params.roundPrecision),
-        round(project.tmOpt.contract.reimburse_rate, params.roundPrecision),
-        round(project.tmOpt.contract.salary, params.roundPrecision),
-        round(project.tmOpt.builder.enpv, params.roundPrecision),
-        round(project.tmOpt.owner.enpv, params.roundPrecision),
-        round(project.tmOpt.builder.risk, params.roundPrecision),
-        round(project.tmOpt.owner.risk, params.roundPrecision),
-        round(project.tmOpt.builder.var, params.roundPrecision),
-        round(project.tmOpt.owner.var, params.roundPrecision),
-        round(project.tmOpt.tvar, params.roundPrecision),
     ]
 
-    print_and_log(
-        log_file,
-        "\t".join(f"{'' if x is None else x:<10}" for x in common_row + ls_row),
-    )
-    print_and_log(
-        log_file,
-        "\t".join(f"{'' if x is None else x:<10}" for x in common_row + cp_row),
-    )
-    print_and_log(
-        log_file,
-        "\t".join(f"{'' if x is None else x:<10}" for x in common_row + lh_row),
-    )
-    print_and_log(
-        log_file,
-        "\t".join(f"{'' if x is None else x:<10}" for x in common_row + tm_row),
-    )
+
+def _build_opt_row(opt: bestContract, rp):
+    c, b, o = opt.contract, opt.builder, opt.owner
+    r = round  # tiny alias
+    return [
+        c.type,
+        r(c.reward, rp),
+        r(c.reimburse_rate, rp),
+        r(c.salary, rp),
+        r(b.enpv, rp),
+        r(o.enpv, rp),
+        r(b.risk, rp),
+        r(o.risk, rp),
+        r(b.var, rp),
+        r(o.var, rp),
+        r(opt.tvar, rp),
+    ]
+
+
+def _fmt_line(values):
+    return "\t".join("" if x is None else f"{x:<10}" for x in values)
+
+
+def opt_report(project: Project, log_file):
+    common = _build_common_row(project)
+    rp = params.roundPrecision
+
+    for attr in ("lsOpt", "cpOpt", "lhOpt", "tmOpt"):
+        opt = getattr(project, attr)
+        line = _fmt_line(common + _build_opt_row(opt, rp))
+        print_and_log(log_file, line)
+
     atexit.register(log_file.close)

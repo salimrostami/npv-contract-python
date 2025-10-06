@@ -1,10 +1,38 @@
 from source.definit.project import projects, Project
-from source.definit.contract import contracts, Contract, make_contracts
+from source.definit.contract import (
+    calc_reward,
+    calc_salary,
+    contracts,
+    Contract,
+)
 from source.evaluate.simulation import simulate
 from source.utility.report_writer import full_report, full_header
 from source.definit.initialize import initialize
 from source.evaluate.exact_eval import exact_calculations
 from source.definit.param import params
+import numpy as np
+
+
+def full_contracts(project: Project, target_b_enpv):
+    contracts.clear()
+    counter = 0
+    for nu in np.arange(0, 1.09, 0.1):
+        Rmax = calc_reward(project, target_b_enpv, nu, 0, params.dist)
+        Smax = calc_salary(project, target_b_enpv, nu, 0, params.dist)
+        for s in np.arange(0, 1.09, 0.1):
+            try:
+                contracts.append(
+                    Contract(
+                        f"{(counter+1):03}",
+                        Rmax * (1 - s),
+                        nu,
+                        Smax * s,
+                        f"{round(nu, 2)}-{round(s, 2)}",
+                    )
+                )
+                counter += 1
+            except ValueError as e:
+                print(e)
 
 
 def update_min_max_total_VaR(proj: Project):
@@ -18,7 +46,7 @@ def full_search():
     cont: Contract
     for proj in projects:
         log_file = full_header(proj)
-        make_contracts(proj, proj.builder_target_enpv)
+        full_contracts(proj, proj.builder_target_enpv)
         initialize(proj)
         for cont in contracts:
             params.isSim and simulate(proj, cont, 0)
