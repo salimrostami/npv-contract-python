@@ -22,9 +22,11 @@ def full_search():
         initialize(proj)
         for cont in contracts:
             params.isSim and simulate(proj, cont, 0)
-            exact_calculations(proj, cont, 0)
+            exact_calculations(
+                proj, cont, proj.exact_results.builder, proj.exact_results.owner, 0
+            )
             update_min_max_total_VaR(proj)
-            full_report(log_file, cont, proj)
+            full_report(proj, cont, log_file)
         print(
             f"Min Total VaR: {proj.min_total_VaR}, Max Total VaR: {proj.max_total_VaR}\n"
         )

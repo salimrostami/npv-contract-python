@@ -9,6 +9,8 @@ from source.evaluate.owner.owner_var import owner_var
 import numpy as np
 from source.definit.param import params
 from source.utility.math_helpers import precise_round
+from source.utility.report_writer import opt_header, opt_report
+from source.evaluate.exact_eval import exact_calculations
 
 min_safe_salary = 12
 
@@ -213,38 +215,77 @@ def opt_contract(
 
 def opt_search():
     proj: Project
+    log_file = opt_header()
     for proj in projects:
         initialize(proj)  # sets lsBase and owner_threshold
-        proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
+        # print headers
+        header = [
+            "proj_id",
+            "cont_type",
+            "reward",
+            "reimburse_rate",
+            "salary",
+            "tvar",
+        ]
+        print("\t".join(header))
+        # print optimization results
         print(
-            (
-                f"Project {proj.proj_id} optimized CP contract: "
-                f"Reimburse Rate = {proj.cpOpt.contract.reimburse_rate}, "
-                f"Salary = {proj.cpOpt.contract.salary}, "
-                f"Reward = {proj.cpOpt.contract.reward}, "
-                f"Total VaR = {precise_round(proj.cpOpt.tvar, params.roundPrecision)}"
+            "\t".join(
+                [
+                    str(proj.proj_id),
+                    str(proj.lsOpt.contract.reimburse_rate),
+                    str(proj.lsOpt.contract.salary),
+                    str(proj.lsOpt.contract.reward),
+                    str(precise_round(proj.lsOpt.tvar, params.roundPrecision)),
+                ]
+            )
+        )
+        proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
+        exact_calculations(
+            proj, proj.cpOpt.contract, proj.cpOpt.builder, proj.cpOpt.owner, 0
+        )
+        print(
+            "\t".join(
+                [
+                    str(proj.proj_id),
+                    str(proj.cpOpt.contract.reimburse_rate),
+                    str(proj.cpOpt.contract.salary),
+                    str(proj.cpOpt.contract.reward),
+                    str(precise_round(proj.cpOpt.tvar, params.roundPrecision)),
+                ]
             )
         )
         proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
+        exact_calculations(
+            proj, proj.lhOpt.contract, proj.lhOpt.builder, proj.lhOpt.owner, 0
+        )
         print(
-            (
-                f"Project {proj.proj_id} optimized LH contract: "
-                f"Reimburse Rate = {proj.lhOpt.contract.reimburse_rate}, "
-                f"Salary = {proj.lhOpt.contract.salary}, "
-                f"Reward = {proj.lhOpt.contract.reward}, "
-                f"Total VaR = {precise_round(proj.lhOpt.tvar, params.roundPrecision)}"
+            "\t".join(
+                [
+                    str(proj.proj_id),
+                    str(proj.lhOpt.contract.reimburse_rate),
+                    str(proj.lhOpt.contract.salary),
+                    str(proj.lhOpt.contract.reward),
+                    str(precise_round(proj.lhOpt.tvar, params.roundPrecision)),
+                ]
             )
         )
         proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
+        exact_calculations(
+            proj, proj.tmOpt.contract, proj.tmOpt.builder, proj.tmOpt.owner, 0
+        )
         print(
-            (
-                f"Project {proj.proj_id} optimized TM contract: "
-                f"Reimburse Rate = {proj.tmOpt.contract.reimburse_rate}, "
-                f"Salary = {proj.tmOpt.contract.salary}, "
-                f"Reward = {proj.tmOpt.contract.reward}, "
-                f"Total VaR = {precise_round(proj.tmOpt.tvar, params.roundPrecision)}"
+            "\t".join(
+                [
+                    str(proj.proj_id),
+                    str(proj.tmOpt.contract.reimburse_rate),
+                    str(proj.tmOpt.contract.salary),
+                    str(proj.tmOpt.contract.reward),
+                    str(precise_round(proj.tmOpt.tvar, params.roundPrecision)),
+                ]
             )
         )
+    opt_report(proj, log_file)
 
 
 def tm_sensitivity():

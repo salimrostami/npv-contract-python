@@ -128,7 +128,13 @@ def debug_sim_contract(
             float(proj.sim_results.builder.var + proj.sim_results.owner.var),
         )
     )
-    exact_calculations(proj, cont, bthresh)
+    exact_calculations(
+        proj,
+        cont,
+        proj.exact_results.builder,
+        proj.exact_results.owner,
+        bthresh,
+    )
     print(
         num_fmt.format(
             float(proj.exact_results.builder.enpv),
