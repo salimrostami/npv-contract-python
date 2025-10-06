@@ -6,7 +6,7 @@ class Params:
     dist: str = "uni"
     simRounds: int = 100000
     isSim: bool = False
-    isFullSearch: bool = False
+    isFullSearch: bool = True
     isOptSearch: bool = True
     isDebug: bool = False
     isTmSense: bool = True

@@ -46,7 +46,7 @@ def full_header(project: Project):
     heads.append("T_VaR")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"{timestamp}_P{project.proj_id}.txt"
+    file_name = f"{timestamp}-P{project.proj_id}-xFull.txt"
 
     # Ensure the 'reports' directory exists
     root_dir = os.path.dirname(
@@ -68,41 +68,40 @@ def full_header(project: Project):
 
 
 def full_report(project: Project, contract: Contract, log_file: TextIO):
+    r = round  # tiny alias
+    rp = params.roundPrecision
     # Always printed items
     row = [
         contract.type,
         contract.subtype,
-        contract.reward,
-        contract.reimburse_rate,
-        contract.salary,
-        project.exact_results.builder.enpv,
-        project.exact_results.owner.enpv,
+        r(contract.reward, 4),
+        r(contract.reimburse_rate, 4),
+        r(contract.salary, 4),
+        r(project.exact_results.builder.enpv, rp),
+        r(project.exact_results.owner.enpv, rp),
     ]
 
     # For risk values: add simulation results only if simulation is True.
     if params.isSim:
-        row.append(project.sim_results.builder.risk)
-    row.append(project.exact_results.builder.risk)
+        row.append(r(project.sim_results.builder.risk, rp))
+    row.append(r(project.exact_results.builder.risk, rp))
 
     if params.isSim:
-        row.append(project.sim_results.owner.risk)
-    row.append(project.exact_results.owner.risk)
+        row.append(r(project.sim_results.owner.risk, rp))
+    row.append(r(project.exact_results.owner.risk, rp))
 
     # For var values: add simulation results only if simulation is True.
     if params.isSim:
-        row.append(project.sim_results.builder.var)
-    row.append(project.exact_results.builder.var)
+        row.append(r(project.sim_results.builder.var, rp))
+    row.append(r(project.exact_results.builder.var, rp))
 
     if params.isSim:
-        row.append(project.sim_results.owner.var)
-    row.append(project.exact_results.owner.var)
+        row.append(r(project.sim_results.owner.var, rp))
+    row.append(r(project.exact_results.owner.var, rp))
 
     # Always print the final rounded value.
     row.append(
-        round(
-            project.exact_results.builder.var + project.exact_results.owner.var,
-            params.roundPrecision,
-        )
+        r(project.exact_results.builder.var + project.exact_results.owner.var, rp)
     )
 
     print_and_log(log_file, "\t".join(f"{x:<10}" for x in row))
@@ -181,9 +180,9 @@ def _build_opt_row(opt: bestContract, rp):
     r = round  # tiny alias
     return [
         c.type,
-        r(c.reward, rp),
-        r(c.reimburse_rate, rp),
-        r(c.salary, rp),
+        r(c.reward, 4),
+        r(c.reimburse_rate, 4),
+        r(c.salary, 4),
         r(b.enpv, rp),
         r(o.enpv, rp),
         r(b.risk, rp),
@@ -253,9 +252,9 @@ def sens_report(cont: Contract, res: ExactResults, log_file: TextIO):
     # Always printed items
     row = [
         cont.type,
-        r(cont.reward, rp),
-        r(cont.reimburse_rate, rp),
-        r(cont.salary, rp),
+        r(cont.reward, 4),
+        r(cont.reimburse_rate, 4),
+        r(cont.salary, 4),
         r(res.builder.enpv, rp),
         r(res.owner.enpv, rp),
         r(res.builder.risk, rp),
