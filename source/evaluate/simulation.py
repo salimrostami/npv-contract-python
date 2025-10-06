@@ -92,6 +92,7 @@ def simulate(
 
 
 def debug_sim_contract(
+    proj: Project,
     cbar: float,
     nu: float,
     salary: float,

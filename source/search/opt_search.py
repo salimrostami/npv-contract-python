@@ -1,7 +1,7 @@
 from typing import Tuple
 from source.definit.contract import Contract, calc_salary, calc_reward
 from source.definit.initialize import initialize
-from source.definit.project import Project, projects
+from source.definit.project import Project, bestContract
 from source.evaluate.builder.builder_enpv import builder_enpv
 from source.evaluate.owner.owner_enpv import owner_enpv
 from source.evaluate.builder.builder_var import builder_var
@@ -211,76 +211,48 @@ def opt_contract(
     return y, cont
 
 
-def opt_search():
-    proj: Project
+def opt_print(proj: Project, cont: bestContract):
+    print(
+        "\t".join(
+            [
+                str(proj.proj_id),
+                str(cont.contract.reimburse_rate),
+                str(cont.contract.salary),
+                str(cont.contract.reward),
+                str(precise_round(cont.tvar, params.roundPrecision)),
+            ]
+        )
+    )
+
+
+def opt_search(proj: Project):
     log_file = opt_header()
-    for proj in projects:
-        initialize(proj)  # sets lsBase and owner_threshold
-        # print headers
-        header = [
-            "proj_id",
-            "cont_type",
-            "reward",
-            "reimburse_rate",
-            "salary",
-            "tvar",
-        ]
-        print("\t".join(header))
-        # print optimization results
-        print(
-            "\t".join(
-                [
-                    str(proj.proj_id),
-                    str(proj.lsOpt.contract.reimburse_rate),
-                    str(proj.lsOpt.contract.salary),
-                    str(proj.lsOpt.contract.reward),
-                    str(precise_round(proj.lsOpt.tvar, params.roundPrecision)),
-                ]
-            )
-        )
-        proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
-        exact_calculations(
-            proj, proj.cpOpt.contract, proj.cpOpt.builder, proj.cpOpt.owner, 0
-        )
-        print(
-            "\t".join(
-                [
-                    str(proj.proj_id),
-                    str(proj.cpOpt.contract.reimburse_rate),
-                    str(proj.cpOpt.contract.salary),
-                    str(proj.cpOpt.contract.reward),
-                    str(precise_round(proj.cpOpt.tvar, params.roundPrecision)),
-                ]
-            )
-        )
-        proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
-        exact_calculations(
-            proj, proj.lhOpt.contract, proj.lhOpt.builder, proj.lhOpt.owner, 0
-        )
-        print(
-            "\t".join(
-                [
-                    str(proj.proj_id),
-                    str(proj.lhOpt.contract.reimburse_rate),
-                    str(proj.lhOpt.contract.salary),
-                    str(proj.lhOpt.contract.reward),
-                    str(precise_round(proj.lhOpt.tvar, params.roundPrecision)),
-                ]
-            )
-        )
-        proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
-        exact_calculations(
-            proj, proj.tmOpt.contract, proj.tmOpt.builder, proj.tmOpt.owner, 0
-        )
-        print(
-            "\t".join(
-                [
-                    str(proj.proj_id),
-                    str(proj.tmOpt.contract.reimburse_rate),
-                    str(proj.tmOpt.contract.salary),
-                    str(proj.tmOpt.contract.reward),
-                    str(precise_round(proj.tmOpt.tvar, params.roundPrecision)),
-                ]
-            )
-        )
+    initialize(proj)  # sets lsBase and owner_threshold
+    # print headers
+    header = [
+        "proj_id",
+        "cont_type",
+        "reward",
+        "reimburse_rate",
+        "salary",
+        "tvar",
+    ]
+    print("\t".join(header))
+    # print optimization results
+    opt_print(proj, proj.lsOpt)
+    proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
+    exact_calculations(
+        proj, proj.cpOpt.contract, proj.cpOpt.builder, proj.cpOpt.owner, 0
+    )
+    opt_print(proj, proj.cpOpt)
+    proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
+    exact_calculations(
+        proj, proj.lhOpt.contract, proj.lhOpt.builder, proj.lhOpt.owner, 0
+    )
+    opt_print(proj, proj.lhOpt)
+    proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
+    exact_calculations(
+        proj, proj.tmOpt.contract, proj.tmOpt.builder, proj.tmOpt.owner, 0
+    )
+    opt_print(proj, proj.tmOpt)
     opt_report(proj, log_file)

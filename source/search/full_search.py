@@ -1,4 +1,4 @@
-from source.definit.project import projects, Project
+from source.definit.project import Project
 from source.definit.contract import (
     calc_reward,
     calc_salary,
@@ -41,20 +41,16 @@ def update_min_max_total_VaR(proj: Project):
     proj.max_total_VaR = min(total_var, proj.max_total_VaR)
 
 
-def full_search():
-    proj: Project
+def full_search(proj: Project):
     cont: Contract
-    for proj in projects:
-        log_file = full_header(proj)
-        full_contracts(proj, proj.builder_target_enpv)
-        initialize(proj)
-        for cont in contracts:
-            params.isSim and simulate(proj, cont, 0)
-            exact_calculations(
-                proj, cont, proj.exact_results.builder, proj.exact_results.owner, 0
-            )
-            update_min_max_total_VaR(proj)
-            full_report(proj, cont, log_file)
-        print(
-            f"Min Total VaR: {proj.min_total_VaR}, Max Total VaR: {proj.max_total_VaR}\n"
+    log_file = full_header(proj)
+    full_contracts(proj, proj.builder_target_enpv)
+    initialize(proj)
+    for cont in contracts:
+        params.isSim and simulate(proj, cont, 0)
+        exact_calculations(
+            proj, cont, proj.exact_results.builder, proj.exact_results.owner, 0
         )
+        update_min_max_total_VaR(proj)
+        full_report(proj, cont, log_file)
+    print(f"Min Total VaR: {proj.min_total_VaR}, Max Total VaR: {proj.max_total_VaR}\n")
