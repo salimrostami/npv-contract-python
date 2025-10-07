@@ -61,8 +61,6 @@ def opt_contract_peakfinder(
     x_left = x_min
     x_right = x_max
     x_center = (x_left + x_right) / 2.0
-    # if contclass == "tm":
-    #     x_center = 0.7891697883605957
 
     # Evaluate initial points
     y_left = f(proj, cont, contclass, x_left)

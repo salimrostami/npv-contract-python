@@ -24,7 +24,7 @@ def owner_calc_w_arg(project: Project, contract: Contract, x_ab, threshold_u):
     # exp_result = np.exp(np.clip(exp_arg, -700, 700))
     exp_result = np.exp(exp_arg)
 
-    # limit = np.float64(1.0142320547350045e100)  # np.finfo(np.float64).max  # ~1.797e308
+    # limit = np.finfo(np.float64).max  # ~1.797e308
     # if abs(exp_result) > limit:
     #     exp_result = np.inf
 
@@ -44,16 +44,12 @@ def owner_calc_eps_tau_w(project: Project, contract: Contract, x_ab, threshold_u
             - contract.reward
         ) / contract.salary
     if W0 is not None:
-        # print(f"W_0({W_arg}) = {W0}")
         Y0 = max(Y - (float(np.real(W0)) / project.discount_rate), 0)
     else:
-        # print(f"W_{{0}} is not defined for {W_arg}\n")
         Y0 = None
     if W1 is not None:
-        # print(f"W_{{-1}}({W_arg}) = {W1}\n")
         Y1 = max(Y - (float(np.real(W1)) / project.discount_rate), 0)
     else:
-        # print(f"W_{{-1}} is not defined for {W_arg}\n")
         Y1 = None
     return Y0, Y1
 

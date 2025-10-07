@@ -22,6 +22,7 @@ def owner_var(project: Project, contract: Contract, target_probability):
         x_high = x
         while True:
             x -= abs(project.owner_target_enpv) / 10
+            # temporary debug if
             if (
                 x == -1093.4622544903086
                 and contract.reimburse_rate == 1
