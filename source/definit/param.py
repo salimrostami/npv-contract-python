@@ -12,7 +12,7 @@ class Params:
     isTmSense: bool = True
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
-    minSafeSalary: int = 12
+    minSafeSalary: int = 50
 
 
 params = Params()

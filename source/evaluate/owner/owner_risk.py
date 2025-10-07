@@ -1,4 +1,6 @@
 import numpy as np
+
+# from source.evaluate.simulation import debug_sim_contract
 from source.utility.math_helpers import (
     build_interval,
     compute_lambert_w,
@@ -35,11 +37,12 @@ def owner_calc_eps_tau_w(project: Project, contract: Contract, x_ab, threshold_u
     W_arg = owner_calc_w_arg(project, contract, x_ab, threshold_u)
     # You can change this to any value
     W0, W1 = compute_lambert_w(W_arg)
-    Y = (
-        project.owner_income
-        + contract.reimburse_rate * (project.c_down_pay + x_ab)
-        - contract.reward
-    ) / contract.salary
+    if W0 is not None or W1 is not None:
+        Y = (
+            project.owner_income
+            + contract.reimburse_rate * (project.c_down_pay + x_ab)
+            - contract.reward
+        ) / contract.salary
     if W0 is not None:
         # print(f"W_0({W_arg}) = {W0}")
         Y0 = max(Y - (float(np.real(W0)) / project.discount_rate), 0)
@@ -247,6 +250,8 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
             ) - owner_risk_uni_calc_integral(project, contract, MR[0], threshold_u)
         if R[0] is not None and R[1] is not None:
             risk += (R[1] - R[0]) / (project.d_uni_high_h - project.d_uni_low_l)
+        # if threshold_u < 0:
+        #     risk = 1 - risk  # temporary fix: if threshodld_u < 0 --> risk = 1-risk
 
     return risk
 

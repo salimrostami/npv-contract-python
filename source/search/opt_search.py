@@ -22,13 +22,7 @@ def f(
         cont.reimburse_rate = x
         Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
         Smin = min(params.minSafeSalary, 0.01 * Smax)
-        _, best_tvar = opt_contract_peakfinder(
-            proj,
-            cont,
-            "lh",
-            Smin,
-            Smax,
-        )
+        _, best_tvar = opt_contract_peakfinder(proj, cont, "lh", Smin, Smax)
         return best_tvar
     elif contclass == "cp":
         cont.reimburse_rate = x
@@ -38,11 +32,9 @@ def f(
         raise ValueError("Invalid contract class. Choose 'cp', 'lh', or 'tm'.")
 
     cont.reward = calc_reward(
-        proj,
-        proj.builder_target_enpv,
-        cont.reimburse_rate,
-        cont.salary,
+        proj, proj.builder_target_enpv, cont.reimburse_rate, cont.salary
     )
+    cont.reward = max(0, cont.reward)
 
     benpv = builder_enpv(proj, cont)
     oenpv = owner_enpv(proj, cont)
@@ -54,11 +46,7 @@ def f(
 
 
 def opt_contract_peakfinder(
-    proj: Project,
-    cont: Contract,
-    contclass: str,
-    x_min: float,
-    x_max: float,
+    proj: Project, cont: Contract, contclass: str, x_min: float, x_max: float
 ) -> Tuple[float, float]:
 
     if contclass == "lh":
@@ -228,16 +216,6 @@ def opt_print(proj: Project, cont: bestContract):
 def opt_search(proj: Project):
     log_file = opt_header()
     initialize(proj)  # sets lsBase and owner_threshold
-    # print headers
-    header = [
-        "proj_id",
-        "cont_type",
-        "reward",
-        "reimburse_rate",
-        "salary",
-        "tvar",
-    ]
-    print("\t".join(header))
     # print optimization results
     opt_print(proj, proj.lsOpt)
     proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")

@@ -34,6 +34,7 @@ def build_interval(low, high):
     elif low <= max(high, 0):
         return (low, max(high, 0))
     else:
+        # return (None, None)  # temporary fix: if threshodld_u < 0 --> risk = 1-risk
         raise ValueError("Invalid interval: low must be less than or equal to high.")
 
 

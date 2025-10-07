@@ -6,6 +6,8 @@ from source.search.opt_search import opt_search
 from source.definit.param import params
 from source.search.sens_search import tm_sens_rate, tm_sens_salary
 
+# from source.evaluate.simulation import debug_sim_contract
+
 
 def main():
     start_cpu = process_time()
@@ -13,13 +15,21 @@ def main():
     all_projects()
 
     proj: Project
-    for proj in projects:
+
+    # proj = projects[10]
+    # initialize(proj)
+    # debug_sim_contract(proj, 1, 2433.0230789250236, 0, -7500)
+    # # -1093.4622544903086 # 859.8066182645362 # -7500
+
+    for proj in projects[10:]:
         initialize(proj)
         opt_search(proj)
-        params.isTmSense and tm_sens_rate(proj)
-        nu = proj.tmOpt.contract.reimburse_rate
-        params.isTmSense and tm_sens_salary(proj, nu)
-        params.isFullSearch and full_search(proj)
+
+    params.isTmSense and tm_sens_rate(projects[0])
+    proj = projects[0]
+    nu = proj.tmOpt.contract.reimburse_rate
+    params.isTmSense and tm_sens_salary(projects[0], nu)
+    params.isFullSearch and full_search(projects[0])
 
     cpu_elapsed = process_time() - start_cpu
     print(f"CPU time (process): {cpu_elapsed:.3f} s")

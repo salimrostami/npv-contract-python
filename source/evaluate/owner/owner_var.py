@@ -22,6 +22,12 @@ def owner_var(project: Project, contract: Contract, target_probability):
         x_high = x
         while True:
             x -= abs(project.owner_target_enpv) / 10
+            if (
+                x == -1093.4622544903086
+                and contract.reimburse_rate == 1
+                and contract.salary == 2433.0230789250236
+            ):
+                print("debug")
             prob = owner_risk(project, contract, x)
             if prob < target_probability:
                 x_low = x

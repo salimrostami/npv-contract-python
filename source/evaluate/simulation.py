@@ -1,8 +1,10 @@
 import numpy as np
-from source.definit.initialize import initialize
+
+# from source.definit.initialize import initialize
 from source.definit.project import Project
 from source.definit.contract import Contract, calc_reward
-from source.evaluate.exact_eval import exact_calculations
+
+# from source.evaluate.exact_eval import exact_calculations
 from source.definit.param import params
 
 
@@ -93,13 +95,12 @@ def simulate(
 
 def debug_sim_contract(
     proj: Project,
-    cbar: float,
     nu: float,
     salary: float,
     bthresh: float,
     othresh: float,
 ):
-    proj = Project("sim-temp", cbar, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
+    # proj = Project("sim-temp", cbar, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
     cont = Contract("sim-temp", 0, 0, 0, "tm-sense")
     cont.reimburse_rate = nu
     cont.salary = salary
@@ -109,8 +110,9 @@ def debug_sim_contract(
         cont.reimburse_rate,
         cont.salary,
     )
-    initialize(proj)
-    # proj.owner_threshold = othresh
+    cont.reward = max(0, cont.reward)
+    # initialize(proj)
+    proj.owner_threshold = othresh
     simulate(proj, cont, bthresh)
     # Fixed-width table output for aligned columns
     hdr_fmt = "{:<16}{:<16}{:<16}{:<16}{:<16}"
@@ -129,19 +131,21 @@ def debug_sim_contract(
             float(proj.sim_results.builder.var + proj.sim_results.owner.var),
         )
     )
-    exact_calculations(
-        proj,
-        cont,
-        proj.exact_results.builder,
-        proj.exact_results.owner,
-        bthresh,
-    )
-    print(
-        num_fmt.format(
-            float(proj.exact_results.builder.enpv),
-            float(proj.exact_results.owner.enpv),
-            float(proj.exact_results.builder.risk),
-            float(proj.exact_results.owner.risk),
-            float(proj.exact_results.builder.var + proj.exact_results.owner.var),
-        )
-    )
+    # if proj.sim_results.owner.risk > 2:
+    #     print("Owner risk is greater than 0%!")
+    # exact_calculations(
+    #     proj,
+    #     cont,
+    #     proj.exact_results.builder,
+    #     proj.exact_results.owner,
+    #     bthresh,
+    # )
+    # print(
+    #     num_fmt.format(
+    #         float(proj.exact_results.builder.enpv),
+    #         float(proj.exact_results.owner.enpv),
+    #         float(proj.exact_results.builder.risk),
+    #         float(proj.exact_results.owner.risk),
+    #         float(proj.exact_results.builder.var + proj.exact_results.owner.var),
+    #     )
+    # )
