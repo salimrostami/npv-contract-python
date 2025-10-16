@@ -65,84 +65,55 @@ def owner_calc_eps_tau_log(project: Project, contract: Contract, x_ab, threshold
 
 
 def owner_calc_intervals(project: Project, contract: Contract, threshold_u):
-    if threshold_u < 0:
-        if contract.salary > 0:
-            eps_0, eps_1 = owner_calc_eps_tau_w(
-                project, contract, project.c_uni_high_a, threshold_u
-            )
-            tau_0, tau_1 = owner_calc_eps_tau_w(
-                project, contract, project.c_uni_low_b, threshold_u
-            )
-        elif contract.salary == 0:
-            eps_0 = 0
-            tau_0 = 0
+    if contract.salary > 0:
+        eps_0, eps_1 = owner_calc_eps_tau_w(
+            project, contract, project.c_uni_high_a, threshold_u
+        )
+        tau_0, tau_1 = owner_calc_eps_tau_w(
+            project, contract, project.c_uni_low_b, threshold_u
+        )
+    elif contract.salary == 0:
+        if threshold_u < 0:
+            eps_0 = tau_0 = 0
             eps_1 = owner_calc_eps_tau_log(
                 project, contract, project.c_uni_high_a, threshold_u
             )
             tau_1 = owner_calc_eps_tau_log(
                 project, contract, project.c_uni_low_b, threshold_u
             )
-        else:
-            raise ValueError(
-                f"contract.salary: {contract.salary} must be a non-negative number."
-            )
-    elif threshold_u > 0:
-        if contract.salary > 0:
-            eps_0, eps_1 = owner_calc_eps_tau_w(
-                project, contract, project.c_uni_high_a, threshold_u
-            )
-            tau_0, tau_1 = owner_calc_eps_tau_w(
-                project, contract, project.c_uni_low_b, threshold_u
-            )
-        elif contract.salary == 0:
+        elif threshold_u > 0:
             eps_0 = owner_calc_eps_tau_log(
                 project, contract, project.c_uni_high_a, threshold_u
             )
             tau_0 = owner_calc_eps_tau_log(
                 project, contract, project.c_uni_low_b, threshold_u
             )
-            eps_1 = None
-            tau_1 = None
+            eps_1 = tau_1 = None
         else:
             raise ValueError(
-                f"contract.salary: {contract.salary} must be a non-negative number."
-            )
-    elif threshold_u == 0:
-        if contract.salary > 0:
-            eps_0, eps_1 = owner_calc_eps_tau_w(
-                project, contract, project.c_uni_high_a, threshold_u
-            )
-            tau_0, tau_1 = owner_calc_eps_tau_w(
-                project, contract, project.c_uni_low_b, threshold_u
+                f"owner_calc_intervals - Unexpected value of threshold_u: {threshold_u}."
             )
     else:
         raise ValueError(
-            f"unexpected number in threshold_u: {threshold_u} and "
-            f"project.c_down_pay: {project.c_down_pay}",
+            f"owner_calc_intervals - Unexpected value of salary: {contract.salary}."
         )
 
     if threshold_u < 0:
-        L = (None, None)
         ML = build_interval(tau_0, eps_0)
         C = build_interval(eps_0, eps_1)
         MR = build_interval(eps_1, tau_1)
-        R = (None, None)
     elif threshold_u > 0:
-        L = (None, None)
         ML = build_interval(tau_0, eps_0)
         C = (eps_0, float("inf"))
         MR = (None, None)
-        R = (None, None)
     elif threshold_u == 0 and contract.salary == 0:
-        L = (None, None)
         ML = (0, float("inf"))
         C = (None, None)
         MR = (None, None)
-        R = (None, None)
     else:  # threshold_u == 0 and contract.salary > 0
-        L = ML = C = MR = R = (None, None)
+        ML = C = MR = (None, None)
 
-    return L, ML, C, MR, R
+    return ML, C, MR
 
 
 def owner_risk_expo_calc_integral(
@@ -229,31 +200,23 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
     if threshold_u == 0 and contract.salary == 0 and contract.reimburse_rate == 0:
         risk = 1 if project.owner_income < contract.reward else 0
     else:
-        L, ML, C, MR, R = owner_calc_intervals(project, contract, threshold_u)
+        ML, C, MR = owner_calc_intervals(project, contract, threshold_u)
         common_range = (project.d_uni_low_l, project.d_uni_high_h)
-        L = get_common_interval(common_range, L)
         ML = get_common_interval(common_range, ML)
         C = get_common_interval(common_range, C)
         MR = get_common_interval(common_range, MR)
-        R = get_common_interval(common_range, R)
-        if L[0] is not None and L[1] is not None:
-            risk = (L[1] - L[0]) / (project.d_uni_high_h - project.d_uni_low_l)
-        else:
-            risk = 0
         if ML[0] is not None and ML[1] is not None and ML[0] < ML[1]:
-            risk += owner_risk_uni_calc_integral(
+            risk = owner_risk_uni_calc_integral(
                 project, contract, ML[1], threshold_u
             ) - owner_risk_uni_calc_integral(project, contract, ML[0], threshold_u)
+        else:
+            risk = 0
         if C[0] is not None and C[1] is not None:
             risk += (C[1] - C[0]) / (project.d_uni_high_h - project.d_uni_low_l)
         if MR[0] is not None and MR[1] is not None and MR[0] < MR[1]:
             risk += owner_risk_uni_calc_integral(
                 project, contract, MR[1], threshold_u
             ) - owner_risk_uni_calc_integral(project, contract, MR[0], threshold_u)
-        if R[0] is not None and R[1] is not None:
-            risk += (R[1] - R[0]) / (project.d_uni_high_h - project.d_uni_low_l)
-        # if threshold_u < 0:
-        #     risk = 1 - risk  # temporary fix: if threshodld_u < 0 --> risk = 1-risk
 
     return risk
 
