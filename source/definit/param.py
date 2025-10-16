@@ -6,10 +6,10 @@ class Params:
     dist: str = "uni"
     simRounds: int = 100000
     isSim: bool = False
-    isFullSearch: bool = True
+    isFullSearch: bool = False
     isOptSearch: bool = True
     isDebug: bool = False
-    isTmSense: bool = True
+    isTmSense: bool = False
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
     minSafeSalary: int = 50

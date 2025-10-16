@@ -122,24 +122,27 @@ def owner_calc_intervals(project: Project, contract: Contract, threshold_u):
         )
 
     if threshold_u < 0:
-        L = (0, eps_0)
-        ML = build_interval(eps_0, tau_0)
-        MR = build_interval(tau_1, eps_1)
-        R = (eps_1, float("inf"))
+        L = (None, None)
+        ML = build_interval(tau_0, eps_0)
+        C = build_interval(eps_0, eps_1)
+        MR = build_interval(eps_1, tau_1)
+        R = (None, None)
     elif threshold_u > 0:
-        L = (0, eps_1)
-        ML = build_interval(eps_1, tau_1)
-        MR = build_interval(tau_0, eps_0)
-        R = (eps_0, float("inf"))
+        L = (None, None)
+        ML = build_interval(tau_0, eps_0)
+        C = (eps_0, float("inf"))
+        MR = (None, None)
+        R = (None, None)
     elif threshold_u == 0 and contract.salary == 0:
-        L = (0, 0)
+        L = (None, None)
         ML = (0, float("inf"))
+        C = (None, None)
         MR = (None, None)
         R = (None, None)
     else:  # threshold_u == 0 and contract.salary > 0
-        L = ML = MR = R = (None, None)
+        L = ML = C = MR = R = (None, None)
 
-    return L, ML, MR, R
+    return L, ML, C, MR, R
 
 
 def owner_risk_expo_calc_integral(
@@ -226,10 +229,11 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
     if threshold_u == 0 and contract.salary == 0 and contract.reimburse_rate == 0:
         risk = 1 if project.owner_income < contract.reward else 0
     else:
-        L, ML, MR, R = owner_calc_intervals(project, contract, threshold_u)
+        L, ML, C, MR, R = owner_calc_intervals(project, contract, threshold_u)
         common_range = (project.d_uni_low_l, project.d_uni_high_h)
         L = get_common_interval(common_range, L)
         ML = get_common_interval(common_range, ML)
+        C = get_common_interval(common_range, C)
         MR = get_common_interval(common_range, MR)
         R = get_common_interval(common_range, R)
         if L[0] is not None and L[1] is not None:
@@ -240,6 +244,8 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
             risk += owner_risk_uni_calc_integral(
                 project, contract, ML[1], threshold_u
             ) - owner_risk_uni_calc_integral(project, contract, ML[0], threshold_u)
+        if C[0] is not None and C[1] is not None:
+            risk += (C[1] - C[0]) / (project.d_uni_high_h - project.d_uni_low_l)
         if MR[0] is not None and MR[1] is not None and MR[0] < MR[1]:
             risk += owner_risk_uni_calc_integral(
                 project, contract, MR[1], threshold_u

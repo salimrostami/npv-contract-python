@@ -6,6 +6,7 @@ from source.definit.contract import Contract, calc_reward
 
 # from source.evaluate.exact_eval import exact_calculations
 from source.definit.param import params
+from source.evaluate.exact_eval import exact_calculations
 
 
 def calc_builder_npv(project: Project, contract: Contract, random_c, random_t):
@@ -131,21 +132,15 @@ def debug_sim_contract(
             float(proj.sim_results.builder.var + proj.sim_results.owner.var),
         )
     )
-    # if proj.sim_results.owner.risk > 2:
-    #     print("Owner risk is greater than 0%!")
-    # exact_calculations(
-    #     proj,
-    #     cont,
-    #     proj.exact_results.builder,
-    #     proj.exact_results.owner,
-    #     bthresh,
-    # )
-    # print(
-    #     num_fmt.format(
-    #         float(proj.exact_results.builder.enpv),
-    #         float(proj.exact_results.owner.enpv),
-    #         float(proj.exact_results.builder.risk),
-    #         float(proj.exact_results.owner.risk),
-    #         float(proj.exact_results.builder.var + proj.exact_results.owner.var),
-    #     )
-    # )
+    exact_calculations(
+        proj, cont, proj.exact_results.builder, proj.exact_results.owner, bthresh
+    )
+    print(
+        num_fmt.format(
+            float(proj.exact_results.builder.enpv),
+            float(proj.exact_results.owner.enpv),
+            float(proj.exact_results.builder.risk),
+            float(proj.exact_results.owner.risk),
+            float(proj.exact_results.builder.var + proj.exact_results.owner.var),
+        )
+    )

@@ -16,19 +16,22 @@ def main():
 
     proj: Project
 
-    # proj = projects[10]
+    # proj = projects[6]
+    # proj.owner_income = 25000
     # initialize(proj)
-    # debug_sim_contract(proj, 1, 2433.0230789250236, 0, -7500)
+    # debug_sim_contract(proj, 1, 0, 0, 0)
     # # -1093.4622544903086 # 859.8066182645362 # -7500
+    # return
 
-    for proj in projects[10:]:
+    for proj in projects:
         initialize(proj)
         opt_search(proj)
 
     params.isTmSense and tm_sens_rate(projects[0])
     proj = projects[0]
-    nu = proj.tmOpt.contract.reimburse_rate
-    params.isTmSense and tm_sens_salary(projects[0], nu)
+    if proj.tmOpt is not None:
+        nu = proj.tmOpt.contract.reimburse_rate
+        params.isTmSense and tm_sens_salary(projects[0], nu)
     params.isFullSearch and full_search(projects[0])
 
     cpu_elapsed = process_time() - start_cpu

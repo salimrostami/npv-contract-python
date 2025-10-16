@@ -198,14 +198,15 @@ def opt_contract(
 
 
 def opt_print(proj: Project, cont: bestContract):
+    r = round
     print(
         "\t".join(
             [
                 str(proj.proj_id),
-                str(cont.contract.reimburse_rate),
-                str(cont.contract.salary),
-                str(cont.contract.reward),
-                str(precise_round(cont.tvar, params.roundPrecision)),
+                str(r(cont.contract.reimburse_rate), 4),
+                str(r(cont.contract.salary), 4),
+                str(r(cont.contract.reward), 4),
+                str(r(cont.tvar, params.roundPrecision)),
             ]
         )
     )
@@ -215,20 +216,20 @@ def opt_search(proj: Project):
     log_file = opt_header()
     initialize(proj)  # sets lsBase and owner_threshold
     # print optimization results
-    opt_print(proj, proj.lsOpt)
+    # opt_print(proj, proj.lsOpt)
     proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
     exact_calculations(
         proj, proj.cpOpt.contract, proj.cpOpt.builder, proj.cpOpt.owner, 0
     )
-    opt_print(proj, proj.cpOpt)
+    # opt_print(proj, proj.cpOpt)
     proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
     exact_calculations(
         proj, proj.lhOpt.contract, proj.lhOpt.builder, proj.lhOpt.owner, 0
     )
-    opt_print(proj, proj.lhOpt)
+    # opt_print(proj, proj.lhOpt)
     proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
     exact_calculations(
         proj, proj.tmOpt.contract, proj.tmOpt.builder, proj.tmOpt.owner, 0
     )
-    opt_print(proj, proj.tmOpt)
+    # opt_print(proj, proj.tmOpt)
     opt_report(proj, log_file)

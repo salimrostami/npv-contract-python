@@ -12,7 +12,9 @@ from source.definit.param import params
 def print_and_log(log_file: TextIO, text: str):
     """Helper to print to console and log to file."""
     print(text)
-    log_file.write(text + "\n")
+    print(text, file=log_file, flush=True)  # flush right away
+    log_file.flush()
+    # log_file.write(text + "\n")
 
 
 def full_header(project: Project):
@@ -112,14 +114,14 @@ def opt_header():
     heads = [
         "time",
         "proj_id",
-        "c_fixed",
-        "c_low",
-        "c_high",
-        "d_low",
-        "d_high",
-        "disc_rate",
-        "b_t_enpv",
-        "o_income",
+        # "c_fixed",
+        # "c_low",
+        # "c_high",
+        # "d_low",
+        # "d_high",
+        # "disc_rate",
+        # "b_t_enpv",
+        # "o_income",
         "cont_type",
         "reward",
         "rate",
@@ -150,10 +152,10 @@ def opt_header():
     # check if opt_report file already exists, if so, open it in append mode
     if os.path.exists(file_path):
         # open in append mode
-        log_file = open(file_path, "a")
+        log_file = open(file_path, "a", buffering=1, encoding="utf-8")
     else:
         # create the file_path file and open it in write mode
-        log_file = open(file_path, "w")
+        log_file = open(file_path, "w", buffering=1, encoding="utf-8")
         # print_and_log(log_file, "\n")
         print_and_log(log_file, "\t".join(f"{x:<10}" for x in heads))
 
@@ -164,14 +166,14 @@ def _build_common_row(project: Project):
     return [
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         project.proj_id,
-        project.c_down_pay,
-        project.c_uni_low_b,
-        project.c_uni_high_a,
-        project.d_uni_low_l,
-        project.d_uni_high_h,
-        project.discount_rate,
-        project.builder_target_enpv,
-        project.owner_income,
+        # project.c_down_pay,
+        # project.c_uni_low_b,
+        # project.c_uni_high_a,
+        # project.d_uni_low_l,
+        # project.d_uni_high_h,
+        # project.discount_rate,
+        # project.builder_target_enpv,
+        # project.owner_income,
     ]
 
 
