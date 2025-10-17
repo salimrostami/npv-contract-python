@@ -21,7 +21,7 @@ def f(
     if contclass == "tm":
         cont.reimburse_rate = x
         Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-        Smin = min(params.minSafeSalary, 0.01 * Smax)
+        Smin = max(params.minSafeSalary, 0.01 * Smax)
         _, best_tvar = opt_contract_peakfinder(proj, cont, "lh", Smin, Smax)
         return best_tvar
     elif contclass == "cp":
@@ -176,7 +176,7 @@ def opt_contract(
     elif contclass == "tm":
         cont.reimburse_rate = x
         Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-        Smin = min(params.minSafeSalary, 0.01 * Smax)
+        Smin = max(params.minSafeSalary, 0.01 * Smax)
         cont.salary, _ = opt_contract_peakfinder(
             proj,
             cont,
@@ -193,6 +193,7 @@ def opt_contract(
         cont.reimburse_rate,
         cont.salary,
     )
+    cont.reward = max(0, cont.reward)
 
     return y, cont
 

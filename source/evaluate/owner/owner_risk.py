@@ -200,8 +200,6 @@ def owner_risk_uni(project: Project, contract: Contract, threshold_u):
     if threshold_u == 0 and contract.salary == 0 and contract.reimburse_rate == 0:
         risk = 1 if project.owner_income < contract.reward else 0
     else:
-        if contract.reimburse_rate == 1 and contract.salary == 24.330230789250237:
-            print("debug")
         ML, C, MR = owner_calc_intervals(project, contract, threshold_u)
         common_range = (project.d_uni_low_l, project.d_uni_high_h)
         ML = get_common_interval(common_range, ML)

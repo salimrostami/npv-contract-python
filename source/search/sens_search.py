@@ -38,7 +38,7 @@ def tm_sens_rate(proj: Project):
             best_salary,
         )
         cont.salary = best_salary
-        cont.reward = best_R
+        cont.reward = max(0, best_R)
         results: ExactResults = ExactResults()
         exact_calculations(proj, cont, results.builder, results.owner, 0)
         sens_report(cont, results, log_file)
@@ -64,6 +64,7 @@ def tm_sens_salary(proj: Project, nu: float):
             cont.reimburse_rate,
             cont.salary,
         )
+        cont.reward = max(0, cont.reward)
         results: ExactResults = ExactResults()
         exact_calculations(proj, cont, results.builder, results.owner, 0)
         sens_report(cont, results, log_file)
