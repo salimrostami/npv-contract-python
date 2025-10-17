@@ -23,7 +23,7 @@ def main():
     # # -1093.4622544903086 # 859.8066182645362 # -7500
     # return
 
-    for proj in projects:
+    for proj in projects[24:]:
         initialize(proj)
         opt_search(proj)
 
