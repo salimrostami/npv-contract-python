@@ -16,11 +16,9 @@ def main():
 
     proj: Project
 
-    # proj = projects[6]
-    # proj.owner_income = 25000
+    # proj = projects[20]
     # initialize(proj)
-    # debug_sim_contract(proj, 1, 0, 0, 0)
-    # # -1093.4622544903086 # 859.8066182645362 # -7500
+    # debug_sim_contract(proj, 0.3009, 7947.3869, 0, proj.owner_threshold)
     # return
 
     for proj in projects:

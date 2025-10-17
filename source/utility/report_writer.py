@@ -128,15 +128,18 @@ def opt_header():
         "salary",
         "B_ENPV",
         "O_ENPV",
-        "B_Risk",
-        "O_Risk",
-        "B_VaR",
-        "O_VaR",
-        "T_VaR",
     ]
-    # if params.isSim:
-    #     heads.append("SB_Risk%")
-    # heads.append("B_Risk%")
+    params.isSim and heads.append("SB_Risk")
+    heads.append("B_Risk")
+
+    params.isSim and heads.append("SO_Risk")
+    heads.append("O_Risk")
+
+    heads.append("B_VaR")
+    heads.append("O_VaR")
+
+    params.isSim and heads.append("ST_VaR")
+    heads.append("T_VaR")
 
     # Ensure the 'reports' directory exists
     root_dir = os.path.dirname(
@@ -180,19 +183,30 @@ def _build_common_row(project: Project):
 def _build_opt_row(opt: bestContract, rp):
     c, b, o = opt.contract, opt.builder, opt.owner
     r = round  # tiny alias
-    return [
+    row = [
         c.type,
         r(c.reward, 4),
         r(c.reimburse_rate, 4),
         r(c.salary, 4),
         r(b.enpv, rp),
         r(o.enpv, rp),
-        r(b.risk, rp),
-        r(o.risk, rp),
-        r(b.var, rp),
-        r(o.var, rp),
-        r(opt.tvar, rp),
     ]
+
+    params.isSim and row.append(r(opt.sim_results.builder.risk, rp))
+    row.append(r(b.risk, rp))
+
+    params.isSim and row.append(r(opt.sim_results.owner.risk, rp))
+    row.append(r(o.risk, rp))
+
+    row.append(r(b.var, rp))
+    row.append(r(o.var, rp))
+
+    params.isSim and row.append(
+        r(opt.sim_results.builder.var + opt.sim_results.owner.var, rp)
+    )
+    row.append(r(opt.tvar, rp))
+
+    return row
 
 
 def _fmt_line(values):

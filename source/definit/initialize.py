@@ -3,6 +3,8 @@ from source.definit.contract import calc_reward, Contract
 from source.evaluate.builder.builder_enpv import builder_enpv
 from source.evaluate.exact_eval import exact_calculations
 from source.evaluate.owner.owner_enpv import owner_enpv
+from source.evaluate.simulation import simulate
+from source.definit.param import params
 
 
 def initialize(project: Project):
@@ -26,3 +28,6 @@ def initialize(project: Project):
         )
 
         project.lsOpt.tvar = project.lsOpt.builder.var + project.lsOpt.owner.var
+        params.isSim and simulate(
+            project, project.lsOpt.contract, project.lsOpt.sim_results, 0
+        )

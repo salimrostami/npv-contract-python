@@ -7,6 +7,7 @@ from source.evaluate.owner.owner_enpv import owner_enpv
 from source.evaluate.builder.builder_var import builder_var
 from source.evaluate.owner.owner_var import owner_var
 from source.definit.param import params
+from source.evaluate.simulation import simulate
 from source.utility.math_helpers import precise_round
 from source.utility.report_writer import opt_header, opt_report
 from source.evaluate.exact_eval import exact_calculations
@@ -216,21 +217,19 @@ def opt_print(proj: Project, cont: bestContract):
 def opt_search(proj: Project):
     log_file = opt_header()
     initialize(proj)  # sets lsBase and owner_threshold
-    # print optimization results
-    # opt_print(proj, proj.lsOpt)
     proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
+    params.isSim and simulate(proj, proj.cpOpt.contract, proj.cpOpt.sim_results, 0)
     exact_calculations(
         proj, proj.cpOpt.contract, proj.cpOpt.builder, proj.cpOpt.owner, 0
     )
-    # opt_print(proj, proj.cpOpt)
     proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
+    params.isSim and simulate(proj, proj.lhOpt.contract, proj.lhOpt.sim_results, 0)
     exact_calculations(
         proj, proj.lhOpt.contract, proj.lhOpt.builder, proj.lhOpt.owner, 0
     )
-    # opt_print(proj, proj.lhOpt)
     proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
+    params.isSim and simulate(proj, proj.tmOpt.contract, proj.tmOpt.sim_results, 0)
     exact_calculations(
         proj, proj.tmOpt.contract, proj.tmOpt.builder, proj.tmOpt.owner, 0
     )
-    # opt_print(proj, proj.tmOpt)
     opt_report(proj, log_file)

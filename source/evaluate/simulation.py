@@ -1,12 +1,9 @@
 import numpy as np
-
-# from source.definit.initialize import initialize
 from source.definit.project import Project
 from source.definit.contract import Contract, calc_reward
-
-# from source.evaluate.exact_eval import exact_calculations
 from source.definit.param import params
 from source.evaluate.exact_eval import exact_calculations
+from source.definit.project import SimResults
 
 
 def calc_builder_npv(project: Project, contract: Contract, random_c, random_t):
@@ -38,6 +35,7 @@ def calc_owner_npv(project: Project, contract: Contract, random_c, random_t):
 def simulate(
     project: Project,
     contract: Contract,
+    results: SimResults,
     builder_threshold_u: float,
 ):
     # Validate the distribution argument
@@ -86,12 +84,12 @@ def simulate(
     owner_risk = float(100 * counter_owner_low_npv / params.simRounds)
     owner_var = np.percentile(owner_npvs, 5) - owner_enpv
 
-    project.sim_results.builder.enpv = builder_enpv
-    project.sim_results.builder.risk = builder_risk
-    project.sim_results.builder.var = builder_var
-    project.sim_results.owner.enpv = owner_enpv
-    project.sim_results.owner.risk = owner_risk
-    project.sim_results.owner.var = owner_var
+    results.builder.enpv = builder_enpv
+    results.builder.risk = builder_risk
+    results.builder.var = builder_var
+    results.owner.enpv = owner_enpv
+    results.owner.risk = owner_risk
+    results.owner.var = owner_var
 
 
 def debug_sim_contract(
@@ -114,13 +112,19 @@ def debug_sim_contract(
     cont.reward = max(0, cont.reward)
     # initialize(proj)
     proj.owner_threshold = othresh
-    simulate(proj, cont, bthresh)
+    simulate(proj, cont, proj.sim_results, bthresh)
     # Fixed-width table output for aligned columns
-    hdr_fmt = "{:<16}{:<16}{:<16}{:<16}{:<16}"
-    num_fmt = "{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}"
+    hdr_fmt = "{:<16}{:<16}{:<16}{:<16}{:<16}{:<16}{:<16}"
+    num_fmt = "{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}{:>16.6f}"
     print(
         hdr_fmt.format(
-            "Builder enpv", "Owner enpv", "Builder risk", "Owner risk", "total VaR"
+            "Builder enpv",
+            "Owner enpv",
+            "Builder risk",
+            "Owner risk",
+            "Builder VaR",
+            "Owner VaR",
+            "total VaR",
         )
     )
     print(
@@ -129,6 +133,8 @@ def debug_sim_contract(
             float(proj.sim_results.owner.enpv),
             float(proj.sim_results.builder.risk),
             float(proj.sim_results.owner.risk),
+            float(proj.sim_results.builder.var),
+            float(proj.sim_results.owner.var),
             float(proj.sim_results.builder.var + proj.sim_results.owner.var),
         )
     )
@@ -141,6 +147,8 @@ def debug_sim_contract(
             float(proj.exact_results.owner.enpv),
             float(proj.exact_results.builder.risk),
             float(proj.exact_results.owner.risk),
+            float(proj.exact_results.builder.var),
+            float(proj.exact_results.owner.var),
             float(proj.exact_results.builder.var + proj.exact_results.owner.var),
         )
     )

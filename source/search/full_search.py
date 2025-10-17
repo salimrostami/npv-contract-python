@@ -47,7 +47,7 @@ def full_search(proj: Project):
     full_contracts(proj, proj.builder_target_enpv)
     initialize(proj)
     for cont in contracts:
-        params.isSim and simulate(proj, cont, 0)
+        params.isSim and simulate(proj, cont, proj.sim_results, 0)
         exact_calculations(
             proj, cont, proj.exact_results.builder, proj.exact_results.owner, 0
         )

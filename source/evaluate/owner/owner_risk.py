@@ -99,9 +99,13 @@ def owner_calc_intervals(project: Project, contract: Contract, threshold_u):
         )
 
     if threshold_u < 0:
-        ML = build_interval(tau_0, eps_0)
         C = build_interval(eps_0, eps_1)
-        MR = build_interval(eps_1, tau_1)
+        if eps_0 is None and eps_1 is None:
+            ML = build_interval(tau_0, tau_1)
+            MR = (None, None)
+        else:
+            ML = build_interval(tau_0, eps_0)
+            MR = build_interval(eps_1, tau_1)
     elif threshold_u > 0:
         ML = build_interval(tau_0, eps_0)
         C = (eps_0, float("inf"))

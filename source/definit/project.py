@@ -33,6 +33,7 @@ class bestContract:
     tvar: float = None
     builder: Result = field(default_factory=Result)
     owner: Result = field(default_factory=Result)
+    sim_results: SimResults = field(default_factory=SimResults)
 
 
 @dataclass

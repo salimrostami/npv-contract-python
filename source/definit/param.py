@@ -4,8 +4,8 @@ from dataclasses import dataclass
 @dataclass
 class Params:
     dist: str = "uni"
-    simRounds: int = 100000
-    isSim: bool = False
+    simRounds: int = 1000000
+    isSim: bool = True
     isFullSearch: bool = False
     isOptSearch: bool = True
     isDebug: bool = False
