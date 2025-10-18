@@ -93,21 +93,14 @@ def simulate(
 
 
 def debug_sim_contract(
-    proj: Project,
-    nu: float,
-    salary: float,
-    bthresh: float,
-    othresh: float,
+    proj: Project, nu: float, salary: float, bthresh: float, othresh: float
 ):
     # proj = Project("sim-temp", cbar, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
     cont = Contract("sim-temp", 0, 0, 0, "tm-sense")
     cont.reimburse_rate = nu
     cont.salary = salary
     cont.reward = calc_reward(
-        proj,
-        proj.builder_target_enpv,
-        cont.reimburse_rate,
-        cont.salary,
+        proj, proj.builder_target_enpv, cont.reimburse_rate, cont.salary
     )
     cont.reward = max(0, cont.reward)
     # initialize(proj)

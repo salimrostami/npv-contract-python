@@ -119,15 +119,42 @@ def calc_salary_uni(project: Project, target_b_enpv, nu, R):
     )
 
 
-def calc_salary(
-    project,
-    target_b_enpv,
-    nu,
-    R,
-):
+def calc_salary(project, target_b_enpv, nu, R):
     if params.dist == "expo":
         return calc_salary_expo(project, target_b_enpv, nu, R)
     elif params.dist == "uni":
         return calc_salary_uni(project, target_b_enpv, nu, R)
     else:
         raise ValueError("The 'distribution' argument must be 'expo' or 'uni'.")
+
+
+def calc_rate_uni(project: Project, target_b_enpv, reward, s):
+    expected_c = (project.c_uni_low_b + project.c_uni_high_a) / 2
+
+    x = (
+        (target_b_enpv - project.c_down_pay)
+        * (project.discount_rate * (project.d_uni_low_l - project.d_uni_high_h))
+        / (
+            np.exp(-project.discount_rate * project.d_uni_high_h)
+            - np.exp(-project.discount_rate * project.d_uni_low_l)
+        )
+        - reward
+        - s
+        * (
+            np.exp(-project.discount_rate * project.d_uni_high_h)
+            * (project.discount_rate * project.d_uni_high_h + 1)
+            - np.exp(-project.discount_rate * project.d_uni_low_l)
+            * (project.discount_rate * project.d_uni_low_l + 1)
+        )
+        / (
+            project.discount_rate
+            * (
+                np.exp(-project.discount_rate * project.d_uni_high_h)
+                - np.exp(-project.discount_rate * project.d_uni_low_l)
+            )
+        )
+    )
+
+    rate = (expected_c - x) / (expected_c + project.c_down_pay)
+
+    return min(1, rate)

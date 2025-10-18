@@ -13,12 +13,7 @@ from source.utility.report_writer import opt_header, opt_report
 from source.evaluate.exact_eval import exact_calculations
 
 
-def f(
-    proj: Project,
-    cont: Contract,
-    contclass: str,
-    x: float,
-) -> float:
+def f(proj: Project, cont: Contract, contclass: str, x: float) -> float:
     if contclass == "tm":
         cont.reimburse_rate = x
         Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
@@ -148,17 +143,8 @@ def opt_contract_peakfinder(
     return x_center, y_center
 
 
-def opt_contract(
-    proj: Project,
-    contclass: str,
-) -> Tuple[float, Contract]:
-    cont = Contract(
-        "optcont",
-        0,
-        0,
-        0,
-        "---",
-    )
+def opt_contract(proj: Project, contclass: str) -> Tuple[float, Contract]:
+    cont = Contract("optcont", 0, 0, 0, "---")
     cont.type = contclass
     if contclass == "cp" or contclass == "tm":
         x_min = 0.0
@@ -189,10 +175,7 @@ def opt_contract(
         raise ValueError("Invalid contract class. Choose 'cp', 'lh', or 'tm'.")
 
     cont.reward = calc_reward(
-        proj,
-        proj.builder_target_enpv,
-        cont.reimburse_rate,
-        cont.salary,
+        proj, proj.builder_target_enpv, cont.reimburse_rate, cont.salary
     )
     cont.reward = max(0, cont.reward)
 

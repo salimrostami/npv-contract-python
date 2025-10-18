@@ -4,12 +4,12 @@ from dataclasses import dataclass
 @dataclass
 class Params:
     dist: str = "uni"
-    simRounds: int = 1000000
-    isSim: bool = True
+    simRounds: int = 100000
+    isSim: bool = False
     isFullSearch: bool = False
-    isOptSearch: bool = True
+    isOptSearch: bool = False
     isDebug: bool = False
-    isTmSense: bool = False
+    isTmSense: bool = True
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
     minSafeSalary: int = 50

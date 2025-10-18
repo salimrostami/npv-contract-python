@@ -1,10 +1,5 @@
 from source.definit.project import Project
-from source.definit.contract import (
-    calc_reward,
-    calc_salary,
-    contracts,
-    Contract,
-)
+from source.definit.contract import calc_reward, calc_salary, contracts, Contract
 from source.evaluate.simulation import simulate
 from source.utility.report_writer import full_report, full_header
 from source.definit.initialize import initialize

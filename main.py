@@ -1,4 +1,3 @@
-from source.definit.initialize import initialize
 from source.search.full_search import full_search
 from source.definit.project import Project, all_projects, projects
 from time import process_time
@@ -21,15 +20,11 @@ def main():
     # debug_sim_contract(proj, 0.3009, 7947.3869, 0, proj.owner_threshold)
     # return
 
-    for proj in projects:
-        initialize(proj)
-        opt_search(proj)
-
+    if params.isOptSearch:
+        for proj in projects[0:1]:
+            opt_search(proj)
     params.isTmSense and tm_sens_rate(projects[0])
-    proj = projects[0]
-    if proj.tmOpt.contract is not None:
-        nu = proj.tmOpt.contract.reimburse_rate
-        params.isTmSense and tm_sens_salary(projects[0], nu)
+    params.isTmSense and tm_sens_salary(projects[0])
     params.isFullSearch and full_search(projects[0])
 
     cpu_elapsed = process_time() - start_cpu

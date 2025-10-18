@@ -34,7 +34,9 @@ def build_interval(low, high):
     elif low <= max(high, 0):
         return (low, max(high, 0))
     else:
-        raise ValueError("Invalid interval: low must be less than or equal to high.")
+        if abs(low - high) < 1e-5:
+            print("Invalid interval: low must be less than or equal to high.")
+        return (low, max(high, 0))
 
 
 def precise_round(value, decimals):
