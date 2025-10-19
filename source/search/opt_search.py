@@ -9,9 +9,8 @@ from source.evaluate.simulation import simulate
 from source.utility.math_helpers import precise_round
 from source.utility.report_writer import opt_header, opt_report
 from source.evaluate.exact_eval import exact_calculations
-
-# from source.evaluate.builder.builder_enpv import builder_enpv
-# from source.evaluate.owner.owner_enpv import owner_enpv
+from source.evaluate.builder.builder_enpv import builder_enpv
+from source.evaluate.owner.owner_enpv import owner_enpv
 
 
 def f(proj: Project, cont: Contract, contclass: str, x: float) -> float:
@@ -33,11 +32,11 @@ def f(proj: Project, cont: Contract, contclass: str, x: float) -> float:
     )
     cont.reward = max(0, cont.reward)
 
-    # benpv = builder_enpv(proj, cont)
-    # oenpv = owner_enpv(proj, cont)
+    benpv = builder_enpv(proj, cont)
+    oenpv = owner_enpv(proj, cont)
 
-    bvar = builder_var(proj, cont, 0.05)  # - benpv
-    ovar = owner_var(proj, cont, 0.05)  # - oenpv
+    bvar = builder_var(proj, cont, 0.05) - benpv
+    ovar = owner_var(proj, cont, 0.05) - oenpv
 
     return bvar + ovar
 

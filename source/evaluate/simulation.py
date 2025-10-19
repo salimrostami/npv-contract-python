@@ -78,11 +78,11 @@ def simulate(
 
     builder_enpv = np.mean(builder_npvs)
     builder_risk = float(100 * counter_builder_low_npv / params.simRounds)
-    builder_var = np.percentile(builder_npvs, 5)  # - builder_enpv
+    builder_var = np.percentile(builder_npvs, 5) - builder_enpv
 
     owner_enpv = np.mean(owner_npvs)
     owner_risk = float(100 * counter_owner_low_npv / params.simRounds)
-    owner_var = np.percentile(owner_npvs, 5)  # - owner_enpv
+    owner_var = np.percentile(owner_npvs, 5) - owner_enpv
 
     results.builder.enpv = builder_enpv
     results.builder.risk = builder_risk
