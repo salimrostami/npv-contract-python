@@ -36,7 +36,7 @@ def tm_sens_salary(proj: Project):
     cont.type = "tm"
     Smax = calc_salary(proj, proj.builder_target_enpv, 0, 0)
     for sp in np.arange(0.0, 1.009, 0.01):
-        if sp * Smax < params.minSafeSalary:
+        if sp > 0 and sp * Smax < params.minSafeSalary:
             continue
         cont.salary = sp * Smax
         nu_max = calc_rate_uni(proj, proj.builder_target_enpv, 0, cont.salary)

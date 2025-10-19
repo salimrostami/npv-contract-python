@@ -19,5 +19,5 @@ def exact_calculations(
     o_results.enpv = owner_enpv(proj, cont)
     b_results.risk = 100 * builder_risk(proj, cont, builder_threshold_u)
     o_results.risk = 100 * owner_risk(proj, cont, proj.owner_threshold)
-    b_results.var = builder_var(proj, cont, 0.05) - b_results.enpv
-    o_results.var = owner_var(proj, cont, 0.05) - o_results.enpv
+    b_results.var = builder_var(proj, cont, 0.05)  # - b_results.enpv
+    o_results.var = owner_var(proj, cont, 0.05)  # - o_results.enpv
