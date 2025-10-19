@@ -17,7 +17,9 @@ def initialize(project: Project):
         project.lsOpt.owner.enpv = owner_enpv(project, project.lsOpt.contract)
 
         project.owner_target_enpv = project.lsOpt.owner.enpv
-        project.owner_threshold = project.lsOpt.owner.enpv - project.lsOpt.builder.enpv
+        project.owner_threshold = (
+            0  # project.lsOpt.owner.enpv - project.lsOpt.builder.enpv
+        )
 
         exact_calculations(
             project,

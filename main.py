@@ -5,7 +5,9 @@ from source.search.opt_search import opt_search
 from source.definit.param import params
 from source.search.sens_search import tm_sens_rate, tm_sens_salary
 
-# from source.evaluate.simulation import debug_sim_contract
+from source.definit.initialize import initialize
+from source.evaluate.simulation import debug_sim_contract
+from source.definit.project import Project
 
 
 def main():
@@ -13,10 +15,12 @@ def main():
 
     all_projects()
 
-    # proj = projects[20]
-    # initialize(proj)
-    # debug_sim_contract(proj, 0.3009, 7947.3869, 0, proj.owner_threshold)
-    # return
+    if params.isDebug:
+        proj: Project
+        proj = projects[0]
+        initialize(proj)
+        debug_sim_contract(proj, 0.4318, 0, 0, proj.owner_threshold)
+        return
 
     if params.isOptSearch:
         for proj in projects:

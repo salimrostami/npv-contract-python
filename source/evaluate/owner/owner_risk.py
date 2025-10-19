@@ -89,10 +89,6 @@ def owner_calc_intervals(project: Project, contract: Contract, threshold_u):
                 project, contract, project.c_uni_low_b, threshold_u
             )
             eps_1 = tau_1 = None
-        else:
-            raise ValueError(
-                f"owner_calc_intervals - Unexpected value of threshold_u: {threshold_u}."
-            )
     else:
         raise ValueError(
             f"owner_calc_intervals - Unexpected value of salary: {contract.salary}."
@@ -107,6 +103,10 @@ def owner_calc_intervals(project: Project, contract: Contract, threshold_u):
             ML = build_interval(tau_0, eps_0)
             MR = build_interval(eps_1, tau_1)
     elif threshold_u > 0:
+        ML = build_interval(tau_0, eps_0)
+        C = (eps_0, float("inf"))
+        MR = (None, None)
+    elif threshold_u == 0 and contract.salary > 0:
         ML = build_interval(tau_0, eps_0)
         C = (eps_0, float("inf"))
         MR = (None, None)
@@ -203,6 +203,19 @@ def owner_risk_uni_calc_integral(
 def owner_risk_uni(project: Project, contract: Contract, threshold_u):
     if threshold_u == 0 and contract.salary == 0 and contract.reimburse_rate == 0:
         risk = 1 if project.owner_income < contract.reward else 0
+    elif threshold_u == 0 and contract.salary == 0:
+        delta = (
+            contract.reward
+            - contract.reimburse_rate * project.c_down_pay
+            - project.owner_income
+        ) / contract.reimburse_rate
+        if delta > project.c_uni_high_a:
+            return 1
+        elif delta < project.c_uni_low_b:
+            return 0
+        return (delta - project.c_uni_low_b) / (
+            project.c_uni_high_a - project.c_uni_low_b
+        )
     else:
         ML, C, MR = owner_calc_intervals(project, contract, threshold_u)
         common_range = (project.d_uni_low_l, project.d_uni_high_h)
