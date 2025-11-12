@@ -4,15 +4,15 @@ from source.evaluate.builder.builder_risk import builder_risk
 from source.definit.param import params
 
 
-def builder_var(project: Project, contract: Contract, target_probability) -> float:
+def builder_var(proj: Project, cont: Contract, target_probability) -> float:
     # Compute x_low and x_high
     x = 0
-    prob = builder_risk(project, contract, x)
+    prob = builder_risk(proj, cont, x)
     if prob < target_probability:
         x_low = x
         while True:
-            x += abs(project.builder_target_enpv) / 2
-            prob = builder_risk(project, contract, x)
+            x += abs(proj.b_t_enpv) / 2
+            prob = builder_risk(proj, cont, x)
             if prob > target_probability:
                 x_high = x
                 break
@@ -21,8 +21,8 @@ def builder_var(project: Project, contract: Contract, target_probability) -> flo
     elif prob > target_probability:
         x_high = x
         while True:
-            x -= abs(project.builder_target_enpv) / 2
-            prob = builder_risk(project, contract, x)
+            x -= abs(proj.b_t_enpv) / 2
+            prob = builder_risk(proj, cont, x)
             if prob < target_probability:
                 x_low = x
                 break
@@ -32,20 +32,20 @@ def builder_var(project: Project, contract: Contract, target_probability) -> flo
         return x
 
     # Compute VaR
-    var = binary_search_var(project, contract, target_probability, x_low, x_high)
+    var = binary_search_var(proj, cont, target_probability, x_low, x_high)
     return var
 
 
 def binary_search_var(
-    project: Project,
-    contract: Contract,
+    proj: Project,
+    cont: Contract,
     target_probability,
     x_low,
     x_high,
 ):
     while x_high - x_low > params.ePrecision:
         x_mid = (x_low + x_high) / 2
-        prob = builder_risk(project, contract, x_mid)
+        prob = builder_risk(proj, cont, x_mid)
         if prob < target_probability:
             x_low = x_mid
         elif prob > target_probability:

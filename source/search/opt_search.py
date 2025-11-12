@@ -15,21 +15,19 @@ from source.evaluate.owner.owner_enpv import owner_enpv
 
 def f(proj: Project, cont: Contract, contclass: str, x: float) -> float:
     if contclass == "tm":
-        cont.reimburse_rate = x
-        Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
+        cont.rate = x
+        Smax = calc_salary(proj, proj.b_t_enpv, cont.rate, 0)
         Smin = max(params.minSafeSalary, 0.01 * Smax)
         _, best_tvar = opt_contract_peakfinder(proj, cont, "lh", Smin, Smax)
         return best_tvar
     elif contclass == "cp":
-        cont.reimburse_rate = x
+        cont.rate = x
     elif contclass == "lh":
         cont.salary = x
     else:
         raise ValueError("Invalid contract class. Choose 'cp', 'lh', or 'tm'.")
 
-    cont.reward = calc_reward(
-        proj, proj.builder_target_enpv, cont.reimburse_rate, cont.salary
-    )
+    cont.reward = calc_reward(proj, proj.b_t_enpv, cont.rate, cont.salary)
     cont.reward = max(0, cont.reward)
 
     benpv = builder_enpv(proj, cont)
@@ -44,13 +42,11 @@ def f(proj: Project, cont: Contract, contclass: str, x: float) -> float:
 def opt_contract_peakfinder(
     proj: Project, cont: Contract, contclass: str, x_min: float, x_max: float
 ) -> Tuple[float, float]:
-
+    rp = params.roundPrecision
     if contclass == "lh":
         y_s0 = f(proj, cont, contclass, 0)
         y_smin = f(proj, cont, contclass, x_min)
-        if precise_round(y_s0, params.roundPrecision) > precise_round(
-            y_smin, params.roundPrecision
-        ):
+        if precise_round(y_s0, rp) > precise_round(y_smin, rp):
             return 0, y_s0
 
     # Initial boundaries
@@ -64,31 +60,27 @@ def opt_contract_peakfinder(
     y_center = f(proj, cont, contclass, x_center)
 
     while (x_right - x_left) > params.ePrecision and min(
-        precise_round(y_left, params.roundPrecision),
-        precise_round(y_center, params.roundPrecision),
-        precise_round(y_right, params.roundPrecision),
+        precise_round(y_left, rp),
+        precise_round(y_center, rp),
+        precise_round(y_right, rp),
     ) < max(
-        precise_round(y_left, params.roundPrecision),
-        precise_round(y_center, params.roundPrecision),
-        precise_round(y_right, params.roundPrecision),
+        precise_round(y_left, rp),
+        precise_round(y_center, rp),
+        precise_round(y_right, rp),
     ):
         # Check the slope and determine the direction
-        if precise_round(y_center, params.roundPrecision) >= precise_round(
-            y_left, params.roundPrecision
-        ) and precise_round(y_center, params.roundPrecision) >= precise_round(
-            y_right, params.roundPrecision
-        ):
+        if precise_round(y_center, rp) >= precise_round(y_left, rp) and precise_round(
+            y_center, rp
+        ) >= precise_round(y_right, rp):
             # Local maximum found at the center
             # Halve the interval: keep the center half
             x_right = x_center + (x_right - x_center) / 2.0
             x_left = x_center - (x_center - x_left) / 2.0
             y_right = f(proj, cont, contclass, x_right)
             y_left = f(proj, cont, contclass, x_left)
-        elif precise_round(y_right, params.roundPrecision) >= precise_round(
-            y_center, params.roundPrecision
-        ) and precise_round(y_center, params.roundPrecision) >= precise_round(
-            y_left, params.roundPrecision
-        ):
+        elif precise_round(y_right, rp) >= precise_round(
+            y_center, rp
+        ) and precise_round(y_center, rp) >= precise_round(y_left, rp):
             # uphill to the right
             # Check if we are at the boundary and still going uphill
             if x_right >= x_max:
@@ -108,16 +100,12 @@ def opt_contract_peakfinder(
                     x_right,
                 )
                 y_center = f(proj, cont, contclass, x_center)
-        elif precise_round(y_left, params.roundPrecision) >= precise_round(
-            y_center, params.roundPrecision
-        ) and precise_round(y_center, params.roundPrecision) >= precise_round(
-            y_right, params.roundPrecision
-        ):
+        elif precise_round(y_left, rp) >= precise_round(y_center, rp) and precise_round(
+            y_center, rp
+        ) >= precise_round(y_right, rp):
             # downhill to the right
             # Check if we are at the boundary and still going uphill
-            if precise_round(x_left, params.roundPrecision) <= precise_round(
-                x_min, params.roundPrecision
-            ):
+            if precise_round(x_left, rp) <= precise_round(x_min, rp):
                 x_right = x_center
                 x_center = (x_right + x_left) / 2.0
                 y_right = y_center
@@ -150,19 +138,19 @@ def opt_contract(proj: Project, contclass: str) -> Tuple[float, Contract]:
         x_min = 0.0
         x_max = 1.0
     elif contclass == "lh":
-        x_max = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
-        x_min = min(params.minSafeSalary, 0.01 * x_max)
+        x_max = calc_salary(proj, proj.b_t_enpv, cont.rate, 0)
+        x_min = max(params.minSafeSalary, 0.01 * x_max)
 
     x, y = opt_contract_peakfinder(proj, cont, contclass, x_min, x_max)
     if contclass == "cp":
-        cont.reimburse_rate = x
+        cont.rate = x
         cont.salary = 0
     elif contclass == "lh":
         cont.salary = x
-        cont.reimburse_rate = 0
+        cont.rate = 0
     elif contclass == "tm":
-        cont.reimburse_rate = x
-        Smax = calc_salary(proj, proj.builder_target_enpv, cont.reimburse_rate, 0)
+        cont.rate = x
+        Smax = calc_salary(proj, proj.b_t_enpv, cont.rate, 0)
         Smin = max(params.minSafeSalary, 0.01 * Smax)
         cont.salary, _ = opt_contract_peakfinder(
             proj,
@@ -174,24 +162,23 @@ def opt_contract(proj: Project, contclass: str) -> Tuple[float, Contract]:
     else:
         raise ValueError("Invalid contract class. Choose 'cp', 'lh', or 'tm'.")
 
-    cont.reward = calc_reward(
-        proj, proj.builder_target_enpv, cont.reimburse_rate, cont.salary
-    )
+    cont.reward = calc_reward(proj, proj.b_t_enpv, cont.rate, cont.salary)
     cont.reward = max(0, cont.reward)
 
     return y, cont
 
 
-def opt_print(proj: Project, cont: bestContract):
+def opt_print(proj: Project, opt: bestContract):
     r = round
+    rp = params.roundPrecision
     print(
         "\t".join(
             [
                 str(proj.proj_id),
-                str(r(cont.contract.reimburse_rate), 4),
-                str(r(cont.contract.salary), 4),
-                str(r(cont.contract.reward), 4),
-                str(r(cont.tvar, params.roundPrecision)),
+                str(r(opt.cont.rate, 4)),
+                str(r(opt.cont.salary, 4)),
+                str(r(opt.cont.reward, 4)),
+                str(r(opt.tvar, rp)),
             ]
         )
     )
@@ -200,19 +187,13 @@ def opt_print(proj: Project, cont: bestContract):
 def opt_search(proj: Project):
     log_file = opt_header()
     initialize(proj)  # sets lsBase and owner_threshold
-    proj.cpOpt.tvar, proj.cpOpt.contract = opt_contract(proj, "cp")
-    params.isSim and simulate(proj, proj.cpOpt.contract, proj.cpOpt.sim_results, 0)
-    exact_calculations(
-        proj, proj.cpOpt.contract, proj.cpOpt.builder, proj.cpOpt.owner, 0
-    )
-    proj.lhOpt.tvar, proj.lhOpt.contract = opt_contract(proj, "lh")
-    params.isSim and simulate(proj, proj.lhOpt.contract, proj.lhOpt.sim_results, 0)
-    exact_calculations(
-        proj, proj.lhOpt.contract, proj.lhOpt.builder, proj.lhOpt.owner, 0
-    )
-    proj.tmOpt.tvar, proj.tmOpt.contract = opt_contract(proj, "tm")
-    params.isSim and simulate(proj, proj.tmOpt.contract, proj.tmOpt.sim_results, 0)
-    exact_calculations(
-        proj, proj.tmOpt.contract, proj.tmOpt.builder, proj.tmOpt.owner, 0
-    )
+    proj.cpOpt.tvar, proj.cpOpt.cont = opt_contract(proj, "cp")
+    params.isSim and simulate(proj, proj.cpOpt.cont, proj.cpOpt.sim_results, 0)
+    exact_calculations(proj, proj.cpOpt.cont, proj.cpOpt.builder, proj.cpOpt.owner, 0)
+    proj.lhOpt.tvar, proj.lhOpt.cont = opt_contract(proj, "lh")
+    params.isSim and simulate(proj, proj.lhOpt.cont, proj.lhOpt.sim_results, 0)
+    exact_calculations(proj, proj.lhOpt.cont, proj.lhOpt.builder, proj.lhOpt.owner, 0)
+    proj.tmOpt.tvar, proj.tmOpt.cont = opt_contract(proj, "tm")
+    params.isSim and simulate(proj, proj.tmOpt.cont, proj.tmOpt.sim_results, 0)
+    exact_calculations(proj, proj.tmOpt.cont, proj.tmOpt.builder, proj.tmOpt.owner, 0)
     opt_report(proj, log_file)

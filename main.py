@@ -25,9 +25,12 @@ def main():
     if params.isOptSearch:
         for proj in projects:
             opt_search(proj)
-    params.isTmSense and tm_sens_rate(projects[0])
-    params.isTmSense and tm_sens_salary(projects[0])
-    params.isFullSearch and full_search(projects[0])
+    if params.isTmSense:
+        tm_sens_rate(projects[0])
+    if params.isTmSense:
+        tm_sens_salary(projects[0])
+    if params.isFullSearch:
+        full_search(projects[0])
 
     cpu_elapsed = process_time() - start_cpu
     print(f"CPU time (process): {cpu_elapsed:.3f} s")

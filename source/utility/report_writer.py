@@ -1,4 +1,4 @@
-from pyparsing import TextIO
+from typing import TextIO
 from source.definit.contract import Contract
 from source.definit.project import ExactResults, Project, bestContract
 from datetime import datetime
@@ -17,7 +17,7 @@ def print_and_log(log_file: TextIO, text: str):
     # log_file.write(text + "\n")
 
 
-def full_header(project: Project):
+def full_header(proj: Project):
     heads = [
         "type",
         "subtype",
@@ -48,7 +48,7 @@ def full_header(project: Project):
     heads.append("T_VaR")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"{timestamp}-P{project.proj_id}-xFull.txt"
+    file_name = f"{timestamp}-P{proj.proj_id}-xFull.txt"
 
     # Ensure the 'reports' directory exists
     root_dir = os.path.dirname(
@@ -69,42 +69,40 @@ def full_header(project: Project):
     return log_file
 
 
-def full_report(project: Project, contract: Contract, log_file: TextIO):
+def full_report(proj: Project, cont: Contract, log_file: TextIO):
     r = round  # tiny alias
     rp = params.roundPrecision
     # Always printed items
     row = [
-        contract.type,
-        contract.subtype,
-        r(contract.reward, 4),
-        r(contract.reimburse_rate, 4),
-        r(contract.salary, 4),
-        r(project.exact_results.builder.enpv, rp),
-        r(project.exact_results.owner.enpv, rp),
+        cont.type,
+        cont.subtype,
+        r(cont.reward, 4),
+        r(cont.rate, 4),
+        r(cont.salary, 4),
+        r(proj.exact_results.builder.enpv, rp),
+        r(proj.exact_results.owner.enpv, rp),
     ]
 
     # For risk values: add simulation results only if simulation is True.
     if params.isSim:
-        row.append(r(project.sim_results.builder.risk, rp))
-    row.append(r(project.exact_results.builder.risk, rp))
+        row.append(r(proj.sim_results.builder.risk, rp))
+    row.append(r(proj.exact_results.builder.risk, rp))
 
     if params.isSim:
-        row.append(r(project.sim_results.owner.risk, rp))
-    row.append(r(project.exact_results.owner.risk, rp))
+        row.append(r(proj.sim_results.owner.risk, rp))
+    row.append(r(proj.exact_results.owner.risk, rp))
 
     # For var values: add simulation results only if simulation is True.
     if params.isSim:
-        row.append(r(project.sim_results.builder.var, rp))
-    row.append(r(project.exact_results.builder.var, rp))
+        row.append(r(proj.sim_results.builder.var, rp))
+    row.append(r(proj.exact_results.builder.var, rp))
 
     if params.isSim:
-        row.append(r(project.sim_results.owner.var, rp))
-    row.append(r(project.exact_results.owner.var, rp))
+        row.append(r(proj.sim_results.owner.var, rp))
+    row.append(r(proj.exact_results.owner.var, rp))
 
     # Always print the final rounded value.
-    row.append(
-        r(project.exact_results.builder.var + project.exact_results.owner.var, rp)
-    )
+    row.append(r(proj.exact_results.builder.var + proj.exact_results.owner.var, rp))
 
     print_and_log(log_file, "\t".join(f"{x:<10}" for x in row))
     atexit.register(log_file.close)
@@ -165,28 +163,28 @@ def opt_header():
     return log_file
 
 
-def _build_common_row(project: Project):
+def _build_common_row(proj: Project):
     return [
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        project.proj_id,
-        # project.c_down_pay,
-        # project.c_uni_low_b,
-        # project.c_uni_high_a,
-        # project.d_uni_low_l,
-        # project.d_uni_high_h,
-        # project.discount_rate,
-        # project.builder_target_enpv,
-        # project.owner_income,
+        proj.proj_id,
+        # proj.c_down_pay,
+        # proj.c_low_b,
+        # proj.c_high_a,
+        # proj.d_low_l,
+        # proj.d_high_h,
+        # proj.discount_rate,
+        # proj.b_t_enpv,
+        # proj.owner_income,
     ]
 
 
 def _build_opt_row(opt: bestContract, rp):
-    c, b, o = opt.contract, opt.builder, opt.owner
+    c, b, o = opt.cont, opt.builder, opt.owner
     r = round  # tiny alias
     row = [
         c.type,
         r(c.reward, 4),
-        r(c.reimburse_rate, 4),
+        r(c.rate, 4),
         r(c.salary, 4),
         r(b.enpv, rp),
         r(o.enpv, rp),
@@ -213,19 +211,19 @@ def _fmt_line(values):
     return "\t".join("" if x is None else f"{x:<10}" for x in values)
 
 
-def opt_report(project: Project, log_file: TextIO):
-    common = _build_common_row(project)
+def opt_report(proj: Project, log_file: TextIO):
+    common = _build_common_row(proj)
     rp = params.roundPrecision
 
     for attr in ("lsOpt", "cpOpt", "lhOpt", "tmOpt"):
-        opt = getattr(project, attr)
+        opt = getattr(proj, attr)
         line = _fmt_line(common + _build_opt_row(opt, rp))
         print_and_log(log_file, line)
 
     atexit.register(log_file.close)
 
 
-def sens_header(project: Project, name: str):
+def sens_header(proj: Project, name: str):
     heads = [
         "type",
         "reward",
@@ -241,7 +239,7 @@ def sens_header(project: Project, name: str):
     ]
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"{timestamp}-P{project.proj_id}-{name}.txt"
+    file_name = f"{timestamp}-P{proj.proj_id}-{name}.txt"
 
     # Ensure the 'reports' directory exists
     root_dir = os.path.dirname(
@@ -269,7 +267,7 @@ def sens_report(cont: Contract, res: ExactResults, log_file: TextIO):
     row = [
         cont.type,
         r(cont.reward, 4),
-        r(cont.reimburse_rate, 4),
+        r(cont.rate, 4),
         r(cont.salary, 4),
         r(res.builder.enpv, rp),
         r(res.owner.enpv, rp),

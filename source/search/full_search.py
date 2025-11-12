@@ -8,12 +8,12 @@ from source.definit.param import params
 import numpy as np
 
 
-def full_contracts(project: Project, target_b_enpv):
+def full_contracts(proj: Project, target_b_enpv):
     contracts.clear()
     counter = 0
     for nu in np.arange(0, 1.009, 0.01):
-        Rmax = calc_reward(project, target_b_enpv, nu, 0)
-        Smax = calc_salary(project, target_b_enpv, nu, 0)
+        Rmax = calc_reward(proj, target_b_enpv, nu, 0)
+        Smax = calc_salary(proj, target_b_enpv, nu, 0)
         for s in np.arange(0, 1.009, 0.01):
             try:
                 contracts.append(
@@ -39,7 +39,7 @@ def update_min_max_total_VaR(proj: Project):
 def full_search(proj: Project):
     cont: Contract
     log_file = full_header(proj)
-    full_contracts(proj, proj.builder_target_enpv)
+    full_contracts(proj, proj.b_t_enpv)
     initialize(proj)
     for cont in contracts:
         params.isSim and simulate(proj, cont, proj.sim_results, 0)

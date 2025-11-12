@@ -4,15 +4,15 @@ from source.evaluate.owner.owner_risk import owner_risk
 from source.definit.param import params
 
 
-def owner_var(project: Project, contract: Contract, target_probability):
+def owner_var(proj: Project, cont: Contract, target_probability):
     # Compute x_low and x_high
-    x = project.owner_threshold
-    prob = owner_risk(project, contract, x)
+    x = proj.owner_threshold
+    prob = owner_risk(proj, cont, x)
     if prob < target_probability:
         x_low = x
         while True:
-            x += abs(project.owner_target_enpv) / 10
-            prob = owner_risk(project, contract, x)
+            x += abs(proj.owner_target_enpv) / 10
+            prob = owner_risk(proj, cont, x)
             if prob > target_probability:
                 x_high = x
                 break
@@ -21,8 +21,8 @@ def owner_var(project: Project, contract: Contract, target_probability):
     elif prob > target_probability:
         x_high = x
         while True:
-            x -= abs(project.owner_target_enpv) / 10
-            prob = owner_risk(project, contract, x)
+            x -= abs(proj.owner_target_enpv) / 10
+            prob = owner_risk(proj, cont, x)
             if prob < target_probability:
                 x_low = x
                 break
@@ -32,20 +32,20 @@ def owner_var(project: Project, contract: Contract, target_probability):
         return x
 
     # Compute VaR
-    var = binary_search_var(project, contract, target_probability, x_low, x_high)
+    var = binary_search_var(proj, cont, target_probability, x_low, x_high)
     return var
 
 
 def binary_search_var(
-    project: Project,
-    contract: Contract,
+    proj: Project,
+    cont: Contract,
     target_probability,
     x_low,
     x_high,
 ):
     while x_high - x_low > params.ePrecision:
         x_mid = (x_low + x_high) / 2
-        prob = owner_risk(project, contract, x_mid)
+        prob = owner_risk(proj, cont, x_mid)
         if prob < target_probability:
             x_low = x_mid
         elif prob > target_probability:

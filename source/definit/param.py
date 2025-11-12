@@ -6,9 +6,9 @@ class Params:
     dist: str = "uni"
     simRounds: int = 100000
     isOptSearch: bool = True
-    isFullSearch: bool = False
-    isTmSense: bool = False
-    isSim: bool = False
+    isFullSearch: bool = True
+    isTmSense: bool = True
+    isSim: bool = True
     isDebug: bool = False
     ePrecision: float = 0.00000001
     roundPrecision: int = 8

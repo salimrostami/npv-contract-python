@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 @dataclass
 class Result:
-    enpv: float = None
-    risk: float = None
-    var: float = None
+    enpv: Optional[float] = None
+    risk: Optional[float] = None
+    var: Optional[float] = None
 
 
 @dataclass
@@ -29,8 +29,8 @@ class SimResults:
 
 @dataclass
 class bestContract:
-    contract: Optional["Contract"] = None
-    tvar: float = None
+    cont: Optional["Contract"] = None
+    tvar: Optional[float] = None
     builder: Result = field(default_factory=Result)
     owner: Result = field(default_factory=Result)
     sim_results: SimResults = field(default_factory=SimResults)
@@ -38,18 +38,18 @@ class bestContract:
 
 @dataclass
 class Project:
-    proj_id: int
+    proj_id: str
     c_down_pay: float
-    c_uni_low_b: float
-    c_uni_high_a: float
-    d_expo_lambda: float
-    d_uni_low_l: float
-    d_uni_high_h: float
+    c_low_b: float
+    c_high_a: float
+    d_lambda: float
+    d_low_l: float
+    d_high_h: float
     discount_rate: float
-    builder_target_enpv: float
+    b_t_enpv: float
     owner_income: float
-    owner_target_enpv: float = None
-    owner_threshold: float = None
+    owner_target_enpv: Optional[float] = None
+    owner_threshold: Optional[float] = None
     exact_results: ExactResults = field(default_factory=ExactResults)
     sim_results: SimResults = field(default_factory=SimResults)
     min_total_VaR: float = -1000000
@@ -74,13 +74,13 @@ def all_projects():
                 Project("004", -7500, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
                 Project("005", -15000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
                 Project("006", -30000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
-                # c_uni_low_b
+                # c_low_b
                 Project("007", -5000, -10000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
                 Project("008", -5000, -20000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
                 Project("009", -5000, -60000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
                 Project("010", -5000, -80000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
                 Project("011", -5000, -100000, -1000, 0.1, 1, 10, 0.1, 5000, 46000),
-                # d_uni_high_h
+                # d_high_h
                 Project("012", -5000, -40000, -1000, 0.1, 1, 3, 0.1, 5000, 46000),
                 Project("013", -5000, -40000, -1000, 0.1, 1, 6, 0.1, 5000, 46000),
                 Project("014", -5000, -40000, -1000, 0.1, 1, 15, 0.1, 5000, 46000),
@@ -125,13 +125,13 @@ Project("003", -2500, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("004", -7500, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("005", -15000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("006", -30000, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
-# c_uni_low_b
+# c_low_b
 Project("007", -5000, -10000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("008", -5000, -20000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("009", -5000, -60000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("010", -5000, -80000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
 Project("011", -5000, -100000, -1000, 0.1, 1, 10, 0.1, 5000, 100000),
-# d_uni_high_h
+# d_high_h
 Project("012", -5000, -40000, -1000, 0.1, 1, 3, 0.1, 5000, 100000),
 Project("013", -5000, -40000, -1000, 0.1, 1, 6, 0.1, 5000, 100000),
 Project("014", -5000, -40000, -1000, 0.1, 1, 15, 0.1, 5000, 100000),

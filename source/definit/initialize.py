@@ -7,29 +7,25 @@ from source.evaluate.simulation import simulate
 from source.definit.param import params
 
 
-def initialize(project: Project):
-    if project.lsOpt.contract is None:
-        Rmax = calc_reward(project, project.builder_target_enpv, 0, 0)
+def initialize(proj: Project):
+    if proj.lsOpt.cont is None:
+        Rmax = calc_reward(proj, proj.b_t_enpv, 0, 0)
         lsOpt: Contract = Contract("lsBase", Rmax, 0, 0, "0.0-0.0")
-        project.lsOpt.contract = lsOpt
+        proj.lsOpt.cont = lsOpt
 
-        project.lsOpt.builder.enpv = builder_enpv(project, project.lsOpt.contract)
-        project.lsOpt.owner.enpv = owner_enpv(project, project.lsOpt.contract)
+        proj.lsOpt.builder.enpv = builder_enpv(proj, proj.lsOpt.cont)
+        proj.lsOpt.owner.enpv = owner_enpv(proj, proj.lsOpt.cont)
 
-        project.owner_target_enpv = project.lsOpt.owner.enpv
-        project.owner_threshold = (
-            0  # project.lsOpt.owner.enpv - project.lsOpt.builder.enpv
-        )
+        proj.owner_target_enpv = proj.lsOpt.owner.enpv
+        proj.owner_threshold = 0  # proj.lsOpt.owner.enpv - proj.lsOpt.builder.enpv
 
         exact_calculations(
-            project,
-            project.lsOpt.contract,
-            project.lsOpt.builder,
-            project.lsOpt.owner,
+            proj,
+            proj.lsOpt.cont,
+            proj.lsOpt.builder,
+            proj.lsOpt.owner,
             0,
         )
 
-        project.lsOpt.tvar = project.lsOpt.builder.var + project.lsOpt.owner.var
-        params.isSim and simulate(
-            project, project.lsOpt.contract, project.lsOpt.sim_results, 0
-        )
+        proj.lsOpt.tvar = proj.lsOpt.builder.var + proj.lsOpt.owner.var
+        params.isSim and simulate(proj, proj.lsOpt.cont, proj.lsOpt.sim_results, 0)
