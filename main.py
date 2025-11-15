@@ -4,7 +4,6 @@ from time import process_time
 from source.search.opt_search import opt_search
 from source.definit.param import params
 from source.search.sens_search import tm_sens_rate, tm_sens_salary
-
 from source.definit.initialize import initialize
 from source.evaluate.simulation import debug_sim_contract
 from source.definit.project import Project

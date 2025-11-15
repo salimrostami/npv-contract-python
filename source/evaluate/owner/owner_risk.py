@@ -1,6 +1,4 @@
 import numpy as np
-
-# from source.evaluate.simulation import debug_sim_contract
 from source.evaluate.simulation import calc_owner_npv, sim_o_risk
 from source.utility.math_helpers import (
     build_interval,
