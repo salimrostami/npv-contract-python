@@ -22,23 +22,18 @@ def owner_enpv_uni(
     proj: Project,
     cont: Contract,
 ):
+    erh = np.exp(-proj.discount_rate * proj.d_high_h)
+    erl = np.exp(-proj.discount_rate * proj.d_low_l)
     return (
         proj.owner_income
         - cont.reward
         + cont.rate * proj.c_down_pay
         + cont.rate * (proj.c_high_a + proj.c_low_b) / 2
-    ) * (
-        np.exp(-proj.discount_rate * proj.d_high_h)
-        - np.exp(-proj.discount_rate * proj.d_low_l)
-    ) / (
-        proj.discount_rate * (proj.d_low_l - proj.d_high_h)
-    ) - (
+    ) * (erh - erl) / (proj.discount_rate * (proj.d_low_l - proj.d_high_h)) - (
         cont.salary
         * (
-            np.exp(-proj.discount_rate * proj.d_high_h)
-            * (proj.discount_rate * proj.d_high_h + 1)
-            - np.exp(-proj.discount_rate * proj.d_low_l)
-            * (proj.discount_rate * proj.d_low_l + 1)
+            erh * (proj.discount_rate * proj.d_high_h + 1)
+            - erl * (proj.discount_rate * proj.d_low_l + 1)
         )
         / ((proj.discount_rate**2) * (proj.d_low_l - proj.d_high_h))
     )

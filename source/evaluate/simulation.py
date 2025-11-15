@@ -2,7 +2,6 @@ import numpy as np
 from source.definit.project import Project
 from source.definit.contract import Contract, calc_reward
 from source.definit.param import params
-from source.evaluate.exact_eval import exact_calculations
 from source.definit.project import SimResults
 
 
@@ -78,6 +77,8 @@ def simulate(
 def debug_sim_contract(
     proj: Project, nu: float, salary: float, bthresh: float, othresh: float
 ):
+    from source.evaluate.exact_eval import exact_calculations
+
     # proj = Project("sim-temp", cbar, -40000, -1000, 0.1, 1, 10, 0.1, 5000, 100000)
     cont = Contract("sim-temp", 0, 0, 0, "tm-sense")
     cont.rate = nu
@@ -126,3 +127,62 @@ def debug_sim_contract(
             float(proj.exact_results.builder.var + proj.exact_results.owner.var),
         )
     )
+
+
+def sim_b_risk(
+    proj: Project,
+    cont: Contract,
+    b_threshold_u: float,
+):
+    # Validate the distribution argument
+    if params.dist not in ["uni", "expo"]:
+        raise ValueError(
+            "The 'distribution' argument must " "be either 'uni' or 'expo'."
+        )
+
+    n = params.simRounds
+    rng = np.random.default_rng()  # optional: pass a seed for reproducibility
+
+    # Draws
+    random_c = rng.uniform(proj.c_low_b, proj.c_high_a, size=n)
+    if params.dist == "expo":
+        random_t = rng.exponential(1 / proj.d_lambda, size=n)
+    else:
+        random_t = rng.uniform(proj.d_low_l, proj.d_high_h, size=n)
+
+    # Vectorized NPVs
+    builder_npvs = calc_builder_npv(proj, cont, random_c, random_t)
+
+    # Metrics
+    builder_risk = float(np.mean(builder_npvs < b_threshold_u))
+
+    return builder_risk
+
+
+def sim_o_risk(
+    proj: Project,
+    cont: Contract,
+    o_threshold_u: float,
+):
+    # Validate the distribution argument
+    if params.dist not in ["uni", "expo"]:
+        raise ValueError(
+            "The 'distribution' argument must " "be either 'uni' or 'expo'."
+        )
+
+    n = params.simRounds
+    rng = np.random.default_rng()  # optional: pass a seed for reproducibility
+
+    # Draws
+    random_c = rng.uniform(proj.c_low_b, proj.c_high_a, size=n)
+    if params.dist == "expo":
+        random_t = rng.exponential(1 / proj.d_lambda, size=n)
+    else:
+        random_t = rng.uniform(proj.d_low_l, proj.d_high_h, size=n)
+
+    # Vectorized NPVs
+    owner_npvs = calc_owner_npv(proj, cont, random_c, random_t)
+
+    # Metrics
+    owner_risk = float(np.mean(owner_npvs < o_threshold_u))
+    return owner_risk

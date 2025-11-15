@@ -42,30 +42,35 @@ def calc_reward_expo(proj: Project, target_b_enpv, nu, s):
 
 
 def calc_reward_uni(proj: Project, target_b_enpv, nu, s):
-    return (
-        (target_b_enpv - proj.c_down_pay)
-        * (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
-        / (
-            np.exp(-proj.discount_rate * proj.d_high_h)
-            - np.exp(-proj.discount_rate * proj.d_low_l)
-        )
-        + nu * proj.c_down_pay
-        - (1 - nu) * (proj.c_low_b + proj.c_high_a) / 2
-        - s
-        * (
-            np.exp(-proj.discount_rate * proj.d_high_h)
-            * (proj.discount_rate * proj.d_high_h + 1)
-            - np.exp(-proj.discount_rate * proj.d_low_l)
-            * (proj.discount_rate * proj.d_low_l + 1)
-        )
-        / (
-            proj.discount_rate
+    A = params.enpvs_factor
+    erh = np.exp(-proj.discount_rate * proj.d_high_h)
+    erl = np.exp(-proj.discount_rate * proj.d_low_l)
+    c_mean = (proj.c_low_b + proj.c_high_a) / 2
+    if A == 0:
+        return (
+            (target_b_enpv - proj.c_down_pay)
+            * (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
+            / (erh - erl)
+            + nu * proj.c_down_pay
+            - (1 - nu) * c_mean
+            - s
             * (
-                np.exp(-proj.discount_rate * proj.d_high_h)
-                - np.exp(-proj.discount_rate * proj.d_low_l)
+                erh * (proj.discount_rate * proj.d_high_h + 1)
+                - erl * (proj.discount_rate * proj.d_low_l + 1)
             )
+            / (proj.discount_rate * (erh - erl))
         )
-    )
+    elif A > 0:
+        X = (erh - erl) / (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
+        Y = (
+            erh * (proj.discount_rate * proj.d_high_h + 1)
+            - erl * (proj.discount_rate * proj.d_low_l + 1)
+        ) / (proj.discount_rate**2 * (proj.d_low_l - proj.d_high_h))
+        Z = (proj.owner_income * X - A * proj.c_down_pay - A * X * c_mean) / (A + 1)
+
+        return max(0, (Z + nu * X * (proj.c_down_pay + c_mean) - s * Y) / X)
+    else:
+        raise ValueError("enpvs_factor must be non-negative.")
 
 
 def calc_reward(proj, target_b_enpv, nu, s):
@@ -88,29 +93,48 @@ def calc_salary_expo(proj: Project, target_b_enpv, nu, R):
 
 
 def calc_salary_uni(proj: Project, target_b_enpv, nu, R):
-    return (
-        (
-            target_b_enpv
-            - proj.c_down_pay
-            - (R - nu * proj.c_down_pay + (1 - nu) * (proj.c_low_b + proj.c_high_a) / 2)
-            * (
-                np.exp(-proj.discount_rate * proj.d_high_h)
-                - np.exp(-proj.discount_rate * proj.d_low_l)
-            )
-            / (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
-        )
-        * (proj.discount_rate**2 * (proj.d_low_l - proj.d_high_h))
-        / (
+    A = params.enpvs_factor
+    erh = np.exp(-proj.discount_rate * proj.d_high_h)
+    erl = np.exp(-proj.discount_rate * proj.d_low_l)
+    c_mean = (proj.c_low_b + proj.c_high_a) / 2
+    if A == 0:
+        return (
             (
-                np.exp(-proj.discount_rate * proj.d_high_h)
-                * (proj.discount_rate * proj.d_high_h + 1)
+                target_b_enpv
+                - proj.c_down_pay
+                - (
+                    R
+                    - nu * proj.c_down_pay
+                    + (1 - nu) * (proj.c_low_b + proj.c_high_a) / 2
+                )
+                * (
+                    np.exp(-proj.discount_rate * proj.d_high_h)
+                    - np.exp(-proj.discount_rate * proj.d_low_l)
+                )
+                / (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
             )
-            - (
-                np.exp(-proj.discount_rate * proj.d_low_l)
-                * (proj.discount_rate * proj.d_low_l + 1)
+            * (proj.discount_rate**2 * (proj.d_low_l - proj.d_high_h))
+            / (
+                (
+                    np.exp(-proj.discount_rate * proj.d_high_h)
+                    * (proj.discount_rate * proj.d_high_h + 1)
+                )
+                - (
+                    np.exp(-proj.discount_rate * proj.d_low_l)
+                    * (proj.discount_rate * proj.d_low_l + 1)
+                )
             )
         )
-    )
+    elif A > 0:
+        X = (erh - erl) / (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
+        Y = (
+            erh * (proj.discount_rate * proj.d_high_h + 1)
+            - erl * (proj.discount_rate * proj.d_low_l + 1)
+        ) / (proj.discount_rate**2 * (proj.d_low_l - proj.d_high_h))
+        Z = (proj.owner_income * X - A * proj.c_down_pay - A * X * c_mean) / (A + 1)
+        return max(0, (Z + nu * X * (proj.c_down_pay + c_mean) - R * X) / Y)
+    else:
+        raise ValueError("enpvs_factor must be non-negative.")
 
 
 def calc_salary(proj, target_b_enpv, nu, R):
@@ -122,33 +146,45 @@ def calc_salary(proj, target_b_enpv, nu, R):
         raise ValueError("The 'distribution' argument must be 'expo' or 'uni'.")
 
 
-def calc_rate_uni(proj: Project, target_b_enpv, reward, s):
-    expected_c = (proj.c_low_b + proj.c_high_a) / 2
-
-    x = (
-        (target_b_enpv - proj.c_down_pay)
-        * (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
-        / (
-            np.exp(-proj.discount_rate * proj.d_high_h)
-            - np.exp(-proj.discount_rate * proj.d_low_l)
-        )
-        - reward
-        - s
-        * (
-            np.exp(-proj.discount_rate * proj.d_high_h)
-            * (proj.discount_rate * proj.d_high_h + 1)
-            - np.exp(-proj.discount_rate * proj.d_low_l)
-            * (proj.discount_rate * proj.d_low_l + 1)
-        )
-        / (
-            proj.discount_rate
-            * (
+def calc_rate_uni(proj: Project, target_b_enpv, R, s):
+    A = params.enpvs_factor
+    erh = np.exp(-proj.discount_rate * proj.d_high_h)
+    erl = np.exp(-proj.discount_rate * proj.d_low_l)
+    c_mean = (proj.c_low_b + proj.c_high_a) / 2
+    if A == 0:
+        x = (
+            (target_b_enpv - proj.c_down_pay)
+            * (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
+            / (
                 np.exp(-proj.discount_rate * proj.d_high_h)
                 - np.exp(-proj.discount_rate * proj.d_low_l)
             )
+            - R
+            - s
+            * (
+                np.exp(-proj.discount_rate * proj.d_high_h)
+                * (proj.discount_rate * proj.d_high_h + 1)
+                - np.exp(-proj.discount_rate * proj.d_low_l)
+                * (proj.discount_rate * proj.d_low_l + 1)
+            )
+            / (
+                proj.discount_rate
+                * (
+                    np.exp(-proj.discount_rate * proj.d_high_h)
+                    - np.exp(-proj.discount_rate * proj.d_low_l)
+                )
+            )
         )
-    )
+        rate = (c_mean - x) / (c_mean + proj.c_down_pay)
+        return min(1, rate)
+    elif A > 0:
+        X = (erh - erl) / (proj.discount_rate * (proj.d_low_l - proj.d_high_h))
+        Y = (
+            erh * (proj.discount_rate * proj.d_high_h + 1)
+            - erl * (proj.discount_rate * proj.d_low_l + 1)
+        ) / (proj.discount_rate**2 * (proj.d_low_l - proj.d_high_h))
+        Z = (proj.owner_income * X - A * proj.c_down_pay - A * X * c_mean) / (A + 1)
 
-    rate = (expected_c - x) / (expected_c + proj.c_down_pay)
-
-    return min(1, rate)
+        return max(0, min(1, (R * X + s * Y - Z) / (X * (proj.c_down_pay + c_mean))))
+    else:
+        raise ValueError("enpvs_factor must be non-negative.")

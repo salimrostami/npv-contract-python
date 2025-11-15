@@ -6,13 +6,15 @@ class Params:
     dist: str = "uni"
     simRounds: int = 100000
     isOptSearch: bool = True
-    isFullSearch: bool = True
-    isTmSense: bool = True
+    isFullSearch: bool = False
+    isTmSense: bool = False
     isSim: bool = True
     isDebug: bool = False
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
     minSafeSalary: int = 50
+    enpvs_factor: int = 1
+    "o_enpv = enpvs_factor * b_enpv --- when enpvs_factor = 0, then o_enpv independent of b_enpv"
 
 
 params = Params()

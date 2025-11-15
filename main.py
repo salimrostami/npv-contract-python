@@ -16,10 +16,9 @@ def main():
     all_projects()
 
     if params.isDebug:
-        proj: Project
-        proj = projects[0]
+        proj: Project = projects[1]
         initialize(proj)
-        debug_sim_contract(proj, 0.4318, 0, 0, proj.owner_threshold)
+        debug_sim_contract(proj, 1, 1327.0490291091646, 7500, proj.owner_threshold)
         return
 
     if params.isOptSearch:

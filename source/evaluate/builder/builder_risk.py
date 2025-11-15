@@ -1,4 +1,5 @@
 import numpy as np
+from source.evaluate.simulation import calc_builder_npv, sim_b_risk
 from source.utility.math_helpers import (
     build_interval,
     compute_lambert_w,
@@ -16,11 +17,6 @@ def builder_calc_w_arg(proj: Project, cont: Contract, x, threshold_u):
         / cont.salary
     )
     exp_result = np.float64(np.exp(exp_arg))
-
-    # limit = np.finfo(float).max  # ~1.797e308
-    # if abs(exp_arg) > limit:
-    #     print("Too large!")
-
     w_arg = np.float64(
         (
             proj.discount_rate
@@ -28,25 +24,22 @@ def builder_calc_w_arg(proj: Project, cont: Contract, x, threshold_u):
             / (cont.salary * exp_result)
         )
     )
-
     return w_arg if w_arg != np.inf else np.finfo(np.float64).max
 
 
 def builder_calc_alpha_beta_w(proj: Project, cont: Contract, x, threshold_u):
     W_arg = builder_calc_w_arg(proj, cont, x, threshold_u)
     W0, W1 = compute_lambert_w(W_arg)
+    if W0 is None and W1 is None:
+        return None, None
     Y = (cont.rate * proj.c_down_pay - (1 - cont.rate) * x - cont.reward) / cont.salary
     if W0 is not None:
-        # print(f"W_0({W_arg}) = {W0}")
         Y0 = max(Y - (float(np.real(W0)) / proj.discount_rate), 0)
     else:
-        # print(f"W_{{0}} is not defined for {W_arg}\n")
         Y0 = None
     if W1 is not None:
-        # print(f"W_{{-1}}({W_arg}) = {W1}\n")
         Y1 = max(Y - (float(np.real(W1)) / proj.discount_rate), 0)
     else:
-        # print(f"W_{{-1}} is not defined for {W_arg}\n")
         Y1 = None
     return Y0, Y1
 
@@ -167,7 +160,6 @@ def builder_risk_expo_calc_integral(proj: Project, cont: Contract, x, threshold_
 
 def builder_risk_expo(proj: Project, cont: Contract, threshold_u):
     alpha0, alpha1 = builder_calc_alpha_beta_w(proj, cont, proj.c_high_a, threshold_u)
-    # print(f"alpha0: {alpha0}, alpha1: {alpha1}\n")
     if alpha1:
         risk = np.exp(-proj.d_lambda * alpha1)
     else:
@@ -176,7 +168,6 @@ def builder_risk_expo(proj: Project, cont: Contract, threshold_u):
         beta0, beta1 = builder_calc_alpha_beta_w(proj, cont, proj.c_low_b, threshold_u)
         if beta1 is None:
             beta1 = 0
-        # print(f"beta0: {beta0},beta1: {beta1}\n")
         if alpha1 and beta1:
             risk += builder_risk_expo_calc_integral(
                 proj, cont, alpha1, threshold_u
@@ -223,20 +214,30 @@ def builder_risk_uni(proj: Project, cont: Contract, threshold_u):
         ML = get_common_interval(common_range, ML)
         MR = get_common_interval(common_range, MR)
         R = get_common_interval(common_range, R)
-        if L[0] is not None and L[1] is not None:
-            risk = (L[1] - L[0]) / (proj.d_high_h - proj.d_low_l)
+        if R == MR == ML == L == (None, None):
+            # test if prob is 1 or 0
+            test_bnpv = calc_builder_npv(proj, cont, proj.c_low_b, proj.d_low_l)
+            risk = 1 if test_bnpv < threshold_u else 0
+            sim_brisk = sim_b_risk(proj, cont, threshold_u)
+            if sim_brisk != risk:
+                raise ValueError(
+                    f"Intervals None; sim risk: {sim_brisk} differs from risk: {risk}"
+                )
         else:
-            risk = 0
-        if ML[0] is not None and ML[1] is not None and ML[0] < ML[1]:
-            risk += builder_risk_uni_calc_integral(
-                proj, cont, ML[1], threshold_u
-            ) - builder_risk_uni_calc_integral(proj, cont, ML[0], threshold_u)
-        if MR[0] is not None and MR[1] is not None and MR[0] < MR[1]:
-            risk += builder_risk_uni_calc_integral(
-                proj, cont, MR[1], threshold_u
-            ) - builder_risk_uni_calc_integral(proj, cont, MR[0], threshold_u)
-        if R[0] is not None and R[1] is not None:
-            risk += (R[1] - R[0]) / (proj.d_high_h - proj.d_low_l)
+            if L[0] is not None and L[1] is not None:
+                risk = (L[1] - L[0]) / (proj.d_high_h - proj.d_low_l)
+            else:
+                risk = 0
+            if ML[0] is not None and ML[1] is not None and ML[0] < ML[1]:
+                risk += builder_risk_uni_calc_integral(
+                    proj, cont, ML[1], threshold_u
+                ) - builder_risk_uni_calc_integral(proj, cont, ML[0], threshold_u)
+            if MR[0] is not None and MR[1] is not None and MR[0] < MR[1]:
+                risk += builder_risk_uni_calc_integral(
+                    proj, cont, MR[1], threshold_u
+                ) - builder_risk_uni_calc_integral(proj, cont, MR[0], threshold_u)
+            if R[0] is not None and R[1] is not None:
+                risk += (R[1] - R[0]) / (proj.d_high_h - proj.d_low_l)
 
     return risk
 
