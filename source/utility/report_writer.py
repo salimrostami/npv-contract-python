@@ -9,16 +9,23 @@ from source.definit.param import params
 # from source.utility.math_helpers import precise_round
 
 
-def print_and_log(log_file: TextIO, text: str):
-    """Helper to print to console and log to file."""
+def print_console(text: str):
     print(text)
+
+
+def log_report(log_file: TextIO, text: str):
     print(text, file=log_file, flush=True)  # flush right away
     log_file.flush()
-    # log_file.write(text + "\n")
+
+
+def print_and_log(log_file: TextIO, text: str):
+    """Backward-compatible helper where console and file output are the same."""
+    print_console(text)
+    log_report(log_file, text)
 
 
 def full_header(proj: Project):
-    heads = [
+    file_heads = [
         "type",
         "subtype",
         "reward",
@@ -28,36 +35,53 @@ def full_header(proj: Project):
         "O_ENPV",
     ]
     if params.isSim:
-        heads.append("SB_Risk%")
-    heads.append("B_Risk%")
+        file_heads.append("SB_Risk%")
+    file_heads.append("B_Risk%")
 
     if params.isSim:
-        heads.append("SO_Risk%")
-    heads.append("O_Risk%")
+        file_heads.append("SO_Risk%")
+    file_heads.append("O_Risk%")
 
     # For var values: add simulation results only if simulation is True.
     if params.isSim:
-        heads.append("SB_VaR")
-    heads.append("B_VaR")
+        file_heads.append("SB_VaR")
+    file_heads.append("B_VaR")
 
     if params.isSim:
-        heads.append("SO_VaR")
-    heads.append("O_VaR")
+        file_heads.append("SO_VaR")
+    file_heads.append("O_VaR")
 
     # Always print the final rounded value.
-    heads.append("T_VaR")
+    file_heads.append("T_VaR")
 
     if params.isSim:
-        heads.append("SB_CVaR")
-    heads.append("B_CVaR")
+        file_heads.append("SB_CVaR")
+    file_heads.append("B_CVaR")
 
     if params.isSim:
-        heads.append("SO_CVaR")
-    heads.append("O_CVaR")
+        file_heads.append("SO_CVaR")
+    file_heads.append("O_CVaR")
 
     if params.isSim:
-        heads.append("ST_CVaR")
-    heads.append("T_CVaR")
+        file_heads.append("ST_CVaR")
+    file_heads.append("T_CVaR")
+
+    console_heads = [
+        "type",
+        "subtype",
+        "B_Risk%",
+        "O_Risk%",
+        "B_VaR",
+        "O_VaR",
+        "T_VaR",
+    ]
+    if params.isSim:
+        console_heads.append("SB_CVaR")
+    console_heads.append("B_CVaR")
+    if params.isSim:
+        console_heads.append("SO_CVaR")
+    console_heads.append("O_CVaR")
+    console_heads.append("T_CVaR")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{timestamp}-P{proj.proj_id}-xFull.txt"
@@ -75,8 +99,8 @@ def full_header(proj: Project):
     # create the file_path file and open it in write mode
     log_file = open(file_path, "w")
 
-    # print_and_log(log_file, "\n")
-    print_and_log(log_file, "\t".join(f"{x:<10}" for x in heads))
+    print_console("\t".join(f"{x:<10}" for x in console_heads))
+    log_report(log_file, "\t".join(f"{x:<10}" for x in file_heads))
 
     return log_file
 
@@ -84,8 +108,8 @@ def full_header(proj: Project):
 def full_report(proj: Project, cont: Contract, log_file: TextIO):
     r = round  # tiny alias
     rp = params.roundPrecision
-    # Always printed items
-    row = [
+    # Full row for report file (do not reduce columns)
+    file_row = [
         cont.type,
         cont.subtype,
         r(cont.reward, 4),
@@ -97,38 +121,59 @@ def full_report(proj: Project, cont: Contract, log_file: TextIO):
 
     # For risk values: add simulation results only if simulation is True.
     if params.isSim:
-        row.append(r(proj.sim_results.builder.risk, rp))
-    row.append(r(proj.exact_results.builder.risk, rp))
+        file_row.append(r(proj.sim_results.builder.risk, rp))
+    file_row.append(r(proj.exact_results.builder.risk, rp))
 
     if params.isSim:
-        row.append(r(proj.sim_results.owner.risk, rp))
-    row.append(r(proj.exact_results.owner.risk, rp))
+        file_row.append(r(proj.sim_results.owner.risk, rp))
+    file_row.append(r(proj.exact_results.owner.risk, rp))
 
     # For var values: add simulation results only if simulation is True.
     if params.isSim:
-        row.append(r(proj.sim_results.builder.var, rp))
-    row.append(r(proj.exact_results.builder.var, rp))
+        file_row.append(r(proj.sim_results.builder.var, rp))
+    file_row.append(r(proj.exact_results.builder.var, rp))
 
     if params.isSim:
-        row.append(r(proj.sim_results.owner.var, rp))
-    row.append(r(proj.exact_results.owner.var, rp))
+        file_row.append(r(proj.sim_results.owner.var, rp))
+    file_row.append(r(proj.exact_results.owner.var, rp))
 
     # Always print the final rounded value.
-    row.append(r(proj.exact_results.builder.var + proj.exact_results.owner.var, rp))
+    file_row.append(r(proj.exact_results.builder.var + proj.exact_results.owner.var, rp))
 
     if params.isSim:
-        row.append(r(proj.sim_results.builder.cvar, rp))
-    row.append(r(proj.exact_results.builder.cvar, rp))
+        file_row.append(r(proj.sim_results.builder.cvar, rp))
+    file_row.append(r(proj.exact_results.builder.cvar, rp))
 
     if params.isSim:
-        row.append(r(proj.sim_results.owner.cvar, rp))
-    row.append(r(proj.exact_results.owner.cvar, rp))
+        file_row.append(r(proj.sim_results.owner.cvar, rp))
+    file_row.append(r(proj.exact_results.owner.cvar, rp))
 
     if params.isSim:
-        row.append(r(proj.sim_results.builder.cvar + proj.sim_results.owner.cvar, rp))
-    row.append(r(proj.exact_results.builder.cvar + proj.exact_results.owner.cvar, rp))
+        file_row.append(r(proj.sim_results.builder.cvar + proj.sim_results.owner.cvar, rp))
+    file_row.append(r(proj.exact_results.builder.cvar + proj.exact_results.owner.cvar, rp))
 
-    print_and_log(log_file, "\t".join(f"{x:<10}" for x in row))
+    # Reduced row for terminal output
+    console_row = [
+        cont.type,
+        cont.subtype,
+        r(proj.exact_results.builder.risk, rp),
+        r(proj.exact_results.owner.risk, rp),
+        r(proj.exact_results.builder.var, rp),
+        r(proj.exact_results.owner.var, rp),
+        r(proj.exact_results.builder.var + proj.exact_results.owner.var, rp),
+    ]
+    if params.isSim:
+        console_row.append(r(proj.sim_results.builder.cvar, rp))
+    console_row.append(r(proj.exact_results.builder.cvar, rp))
+    if params.isSim:
+        console_row.append(r(proj.sim_results.owner.cvar, rp))
+    console_row.append(r(proj.exact_results.owner.cvar, rp))
+    console_row.append(
+        r(proj.exact_results.builder.cvar + proj.exact_results.owner.cvar, rp)
+    )
+
+    print_console("\t".join(f"{x:<10}" for x in console_row))
+    log_report(log_file, "\t".join(f"{x:<10}" for x in file_row))
     atexit.register(log_file.close)
 
 
