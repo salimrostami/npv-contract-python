@@ -5,8 +5,8 @@ from dataclasses import dataclass
 class Params:
     dist: str = "uni"
     simRounds: int = 100000
-    isOptSearch: bool = True
-    isFullSearch: bool = False
+    isOptSearch: bool = False
+    isFullSearch: bool = True
     isTmSense: bool = False
     isSim: bool = True
     isDebug: bool = False

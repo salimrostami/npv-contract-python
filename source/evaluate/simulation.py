@@ -26,6 +26,18 @@ def calc_owner_npv(proj: Project, cont: Contract, random_c, random_t):
     )
 
 
+def sim_cvar(npvs, confidence_level: float = 0.95, n_alpha: int = 20) -> float:
+    if not 0 < confidence_level < 1:
+        raise ValueError("confidence_level must be in (0, 1).")
+    if n_alpha <= 0:
+        raise ValueError("n_alpha must be a positive integer.")
+
+    tail_probability = 1 - confidence_level
+    alpha_values = tail_probability * (np.arange(1, n_alpha + 1) / n_alpha)
+    var_values = np.percentile(npvs, alpha_values * 100)
+    return float(np.mean(var_values))
+
+
 def simulate(
     proj: Project,
     cont: Contract,
@@ -65,13 +77,17 @@ def simulate(
 
     builder_var = float(np.percentile(builder_npvs, 5) - builder_enpv)
     owner_var = float(np.percentile(owner_npvs, 5) - owner_enpv)
+    builder_cvar = float(sim_cvar(builder_npvs) - builder_enpv)
+    owner_cvar = float(sim_cvar(owner_npvs) - owner_enpv)
 
     results.builder.enpv = builder_enpv
     results.builder.risk = builder_risk
     results.builder.var = builder_var
+    results.builder.cvar = builder_cvar
     results.owner.enpv = owner_enpv
     results.owner.risk = owner_risk
     results.owner.var = owner_var
+    results.owner.cvar = owner_cvar
 
 
 def debug_sim_contract(

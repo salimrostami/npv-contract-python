@@ -47,6 +47,18 @@ def full_header(proj: Project):
     # Always print the final rounded value.
     heads.append("T_VaR")
 
+    if params.isSim:
+        heads.append("SB_CVaR")
+    heads.append("B_CVaR")
+
+    if params.isSim:
+        heads.append("SO_CVaR")
+    heads.append("O_CVaR")
+
+    if params.isSim:
+        heads.append("ST_CVaR")
+    heads.append("T_CVaR")
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{timestamp}-P{proj.proj_id}-xFull.txt"
 
@@ -103,6 +115,18 @@ def full_report(proj: Project, cont: Contract, log_file: TextIO):
 
     # Always print the final rounded value.
     row.append(r(proj.exact_results.builder.var + proj.exact_results.owner.var, rp))
+
+    if params.isSim:
+        row.append(r(proj.sim_results.builder.cvar, rp))
+    row.append(r(proj.exact_results.builder.cvar, rp))
+
+    if params.isSim:
+        row.append(r(proj.sim_results.owner.cvar, rp))
+    row.append(r(proj.exact_results.owner.cvar, rp))
+
+    if params.isSim:
+        row.append(r(proj.sim_results.builder.cvar + proj.sim_results.owner.cvar, rp))
+    row.append(r(proj.exact_results.builder.cvar + proj.exact_results.owner.cvar, rp))
 
     print_and_log(log_file, "\t".join(f"{x:<10}" for x in row))
     atexit.register(log_file.close)

@@ -13,6 +13,7 @@ class Result:
     enpv: Optional[float] = None
     risk: Optional[float] = None
     var: Optional[float] = None
+    cvar: Optional[float] = None
 
 
 @dataclass
