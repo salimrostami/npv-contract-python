@@ -4,7 +4,8 @@ from time import process_time
 from source.search.opt_var_search import opt_var_search
 from source.search.opt_cvar_search import opt_cvar_search
 from source.definit.param import params
-from source.search.sens_search import tm_sens_rate, tm_sens_salary
+from source.search.sens_search_var import tm_sens_rate_var, tm_sens_salary_var
+from source.search.sens_search_cvar import tm_sens_rate_cvar, tm_sens_salary_cvar
 from source.definit.initialize import initialize
 from source.evaluate.simulation import debug_sim_contract
 from source.definit.project import Project
@@ -27,10 +28,14 @@ def main():
     if params.isOptCVaRSearch:
         for proj in projects:
             opt_cvar_search(proj)
-    if params.isTmSense:
-        tm_sens_rate(projects[0])
-    if params.isTmSense:
-        tm_sens_salary(projects[0])
+    if params.isTmSensRateVar:
+        tm_sens_rate_var(projects[0])
+    if params.isTmSensSalaryVar:
+        tm_sens_salary_var(projects[0])
+    if params.isTmSensRateCVaR:
+        tm_sens_rate_cvar(projects[0])
+    if params.isTmSensSalaryCVaR:
+        tm_sens_salary_cvar(projects[0])
     if params.isFullSearch:
         full_search(projects[0])
 

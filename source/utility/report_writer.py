@@ -470,21 +470,7 @@ def opt_report(proj: Project, log_file: TextIO):
     return opt_var_report(proj, log_file)
 
 
-def sens_header(proj: Project, name: str):
-    heads = [
-        "type",
-        "reward",
-        "rate",
-        "salary",
-        "B_ENPV",
-        "O_ENPV",
-        "B_Risk",
-        "O_Risk",
-        "B_VaR",
-        "O_VaR",
-        "T_VaR",
-    ]
-
+def _open_sens_log(proj: Project, name: str):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"{timestamp}-P{proj.proj_id}-{name}.txt"
 
@@ -500,18 +486,69 @@ def sens_header(proj: Project, name: str):
     log_file: TextIO
     # create the file_path file and open it in write mode
     log_file = open(file_path, "w")
-
-    # print_and_log(log_file, "\n")
-    print_and_log(log_file, "\t".join("" if x is None else f"{x:<10}" for x in heads))
-
     return log_file
 
 
-def sens_report(cont: Contract, res: ExactResults, log_file: TextIO):
+def sens_var_header(proj: Project, name: str):
+    file_heads = [
+        "type",
+        "reward",
+        "rate",
+        "salary",
+        "B_ENPV",
+        "O_ENPV",
+        "B_Risk",
+        "O_Risk",
+        "B_VaR",
+        "O_VaR",
+        "T_VaR",
+    ]
+    console_heads = [
+        "type",
+        "rate",
+        "salary",
+        "B_VaR",
+        "O_VaR",
+        "T_VaR",
+    ]
+    log_file = _open_sens_log(proj, name)
+    print_console("\t".join("" if x is None else f"{x:<10}" for x in console_heads))
+    log_report(log_file, "\t".join("" if x is None else f"{x:<10}" for x in file_heads))
+    return log_file
+
+
+def sens_cvar_header(proj: Project, name: str):
+    file_heads = [
+        "type",
+        "reward",
+        "rate",
+        "salary",
+        "B_ENPV",
+        "O_ENPV",
+        "B_Risk",
+        "O_Risk",
+        "B_CVaR",
+        "O_CVaR",
+        "T_CVaR",
+    ]
+    console_heads = [
+        "type",
+        "rate",
+        "salary",
+        "B_CVaR",
+        "O_CVaR",
+        "T_CVaR",
+    ]
+    log_file = _open_sens_log(proj, name)
+    print_console("\t".join("" if x is None else f"{x:<10}" for x in console_heads))
+    log_report(log_file, "\t".join("" if x is None else f"{x:<10}" for x in file_heads))
+    return log_file
+
+
+def sens_var_report(cont: Contract, res: ExactResults, log_file: TextIO):
     rp = params.roundPrecision
     r = round  # tiny alias
-    # Always printed items
-    row = [
+    file_row = [
         cont.type,
         r(cont.reward, 4),
         r(cont.rate, 4),
@@ -524,6 +561,53 @@ def sens_report(cont: Contract, res: ExactResults, log_file: TextIO):
         r(res.owner.var, rp),
         r(res.builder.var + res.owner.var, rp),
     ]
-
-    print_and_log(log_file, "\t".join("" if x is None else f"{x:<10}" for x in row))
+    console_row = [
+        cont.type,
+        r(cont.rate, 4),
+        r(cont.salary, 4),
+        r(res.builder.var, rp),
+        r(res.owner.var, rp),
+        r(res.builder.var + res.owner.var, rp),
+    ]
+    print_console("\t".join("" if x is None else f"{x:<10}" for x in console_row))
+    log_report(log_file, "\t".join("" if x is None else f"{x:<10}" for x in file_row))
     atexit.register(log_file.close)
+
+
+def sens_cvar_report(cont: Contract, res: ExactResults, log_file: TextIO):
+    rp = params.roundPrecision
+    r = round  # tiny alias
+    file_row = [
+        cont.type,
+        r(cont.reward, 4),
+        r(cont.rate, 4),
+        r(cont.salary, 4),
+        r(res.builder.enpv, rp),
+        r(res.owner.enpv, rp),
+        r(res.builder.risk, rp),
+        r(res.owner.risk, rp),
+        r(res.builder.cvar, rp),
+        r(res.owner.cvar, rp),
+        r(res.builder.cvar + res.owner.cvar, rp),
+    ]
+    console_row = [
+        cont.type,
+        r(cont.rate, 4),
+        r(cont.salary, 4),
+        r(res.builder.cvar, rp),
+        r(res.owner.cvar, rp),
+        r(res.builder.cvar + res.owner.cvar, rp),
+    ]
+    print_console("\t".join("" if x is None else f"{x:<10}" for x in console_row))
+    log_report(log_file, "\t".join("" if x is None else f"{x:<10}" for x in file_row))
+    atexit.register(log_file.close)
+
+
+def sens_header(proj: Project, name: str):
+    # Backward compatible alias for VaR sensitivity reports.
+    return sens_var_header(proj, name)
+
+
+def sens_report(cont: Contract, res: ExactResults, log_file: TextIO):
+    # Backward compatible alias for VaR sensitivity reports.
+    return sens_var_report(cont, res, log_file)
