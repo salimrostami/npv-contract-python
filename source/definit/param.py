@@ -5,10 +5,10 @@ from dataclasses import dataclass
 class Params:
     dist: str = "uni"
     simRounds: int = 100000
-    isOptSearch: bool = False
-    isFullSearch: bool = True
+    isOptSearch: bool = True
+    isFullSearch: bool = False
     isTmSense: bool = False
-    isSim: bool = False
+    isSim: bool = True
     isDebug: bool = False
     ePrecision: float = 0.00000001
     roundPrecision: int = 8

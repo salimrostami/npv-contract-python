@@ -32,6 +32,7 @@ class SimResults:
 class bestContract:
     cont: Optional["Contract"] = None
     tvar: Optional[float] = None
+    tcvar: Optional[float] = None
     builder: Result = field(default_factory=Result)
     owner: Result = field(default_factory=Result)
     sim_results: SimResults = field(default_factory=SimResults)

@@ -1,7 +1,7 @@
 from source.search.full_search import full_search
 from source.definit.project import all_projects, projects
 from time import process_time
-from source.search.opt_search import opt_search
+from source.search.opt_cvar_search import opt_cvar_search
 from source.definit.param import params
 from source.search.sens_search import tm_sens_rate, tm_sens_salary
 from source.definit.initialize import initialize
@@ -22,7 +22,7 @@ def main():
 
     if params.isOptSearch:
         for proj in projects:
-            opt_search(proj)
+            opt_cvar_search(proj)
     if params.isTmSense:
         tm_sens_rate(projects[0])
     if params.isTmSense:

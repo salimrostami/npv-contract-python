@@ -292,6 +292,89 @@ def opt_report(proj: Project, log_file: TextIO):
     atexit.register(log_file.close)
 
 
+def opt_cvar_header():
+    heads = [
+        "time",
+        "proj_id",
+        "cont_type",
+        "reward",
+        "rate",
+        "salary",
+        "B_ENPV",
+        "O_ENPV",
+    ]
+    params.isSim and heads.append("SB_Risk")
+    heads.append("B_Risk")
+
+    params.isSim and heads.append("SO_Risk")
+    heads.append("O_Risk")
+
+    heads.append("B_CVaR")
+    heads.append("O_CVaR")
+
+    params.isSim and heads.append("ST_CVaR")
+    heads.append("T_CVaR")
+
+    root_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(__file__))
+    )
+    reports_dir = os.path.join(root_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    file_name = "~opt_cvar_report.txt"
+    file_path = os.path.join(reports_dir, file_name)
+
+    log_file: TextIO
+    if os.path.exists(file_path):
+        log_file = open(file_path, "a", buffering=1, encoding="utf-8")
+    else:
+        log_file = open(file_path, "w", buffering=1, encoding="utf-8")
+        print_and_log(log_file, "\t".join(f"{x:<10}" for x in heads))
+
+    return log_file
+
+
+def _build_opt_cvar_row(opt: bestContract, rp):
+    c, b, o = opt.cont, opt.builder, opt.owner
+    r = round
+    row = [
+        c.type,
+        r(c.reward, 4),
+        r(c.rate, 4),
+        r(c.salary, 4),
+        r(b.enpv, rp),
+        r(o.enpv, rp),
+    ]
+
+    params.isSim and row.append(r(opt.sim_results.builder.risk, rp))
+    row.append(r(b.risk, rp))
+
+    params.isSim and row.append(r(opt.sim_results.owner.risk, rp))
+    row.append(r(o.risk, rp))
+
+    row.append(r(b.cvar, rp))
+    row.append(r(o.cvar, rp))
+
+    params.isSim and row.append(
+        r(opt.sim_results.builder.cvar + opt.sim_results.owner.cvar, rp)
+    )
+    row.append(r(opt.tcvar, rp))
+
+    return row
+
+
+def opt_cvar_report(proj: Project, log_file: TextIO):
+    common = _build_common_row(proj)
+    rp = params.roundPrecision
+
+    for attr in ("lsOpt", "cpOpt", "lhOpt", "tmOpt"):
+        opt = getattr(proj, attr)
+        line = _fmt_line(common + _build_opt_cvar_row(opt, rp))
+        print_and_log(log_file, line)
+
+    atexit.register(log_file.close)
+
+
 def sens_header(proj: Project, name: str):
     heads = [
         "type",
