@@ -4,9 +4,14 @@ from source.evaluate.builder.builder_risk import builder_risk
 from source.definit.param import params
 
 
-def builder_var(proj: Project, cont: Contract, target_probability) -> float:
+def builder_var(
+    proj: Project,
+    cont: Contract,
+    target_probability,
+    x_start: float | None = None,
+) -> float:
     # Compute x_low and x_high
-    x = 0
+    x = 0 if x_start is None else x_start
     prob = builder_risk(proj, cont, x)
     if prob < target_probability:
         x_low = x

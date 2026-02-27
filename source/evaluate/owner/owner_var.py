@@ -4,9 +4,14 @@ from source.evaluate.owner.owner_risk import owner_risk
 from source.definit.param import params
 
 
-def owner_var(proj: Project, cont: Contract, target_probability):
+def owner_var(
+    proj: Project,
+    cont: Contract,
+    target_probability,
+    x_start: float | None = None,
+):
     # Compute x_low and x_high
-    x = proj.owner_threshold
+    x = proj.owner_threshold if x_start is None else x_start
     prob = owner_risk(proj, cont, x)
     if prob < target_probability:
         x_low = x

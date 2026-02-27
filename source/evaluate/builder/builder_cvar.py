@@ -16,7 +16,12 @@ def builder_CVaR(
 
     tail_probability = 1 - confidence_level
     alpha_values = [tail_probability * (i + 1) / n_alpha for i in range(n_alpha)]
-    var_values = [builder_var(proj, cont, alpha) for alpha in alpha_values]
+    var_values = []
+    x_start = None
+    for alpha in alpha_values:
+        var = builder_var(proj, cont, alpha, x_start=x_start)
+        var_values.append(var)
+        x_start = var
     return sum(var_values) / len(var_values)
 
 

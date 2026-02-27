@@ -8,7 +8,7 @@ class Params:
     isOptSearch: bool = False
     isFullSearch: bool = True
     isTmSense: bool = False
-    isSim: bool = True
+    isSim: bool = False
     isDebug: bool = False
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
