@@ -177,18 +177,42 @@ def full_report(proj: Project, cont: Contract, log_file: TextIO):
     atexit.register(log_file.close)
 
 
-def opt_header():
-    heads = [
+def _open_opt_log(file_name: str):
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    reports_dir = os.path.join(root_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    file_path = os.path.join(reports_dir, file_name)
+    if os.path.exists(file_path):
+        return open(file_path, "a", buffering=1, encoding="utf-8")
+    return open(file_path, "w", buffering=1, encoding="utf-8")
+
+
+def _objective_totals(opt: bestContract):
+    tvar = (
+        opt.tvar
+        if opt.tvar is not None
+        else (
+            None
+            if opt.builder.var is None or opt.owner.var is None
+            else opt.builder.var + opt.owner.var
+        )
+    )
+    tcvar = (
+        opt.tcvar
+        if opt.tcvar is not None
+        else (
+            None
+            if opt.builder.cvar is None or opt.owner.cvar is None
+            else opt.builder.cvar + opt.owner.cvar
+        )
+    )
+    return tvar, tcvar
+
+
+def opt_var_header():
+    file_heads = [
         "time",
         "proj_id",
-        # "c_fixed",
-        # "c_low",
-        # "c_high",
-        # "d_low",
-        # "d_high",
-        # "disc_rate",
-        # "b_t_enpv",
-        # "o_income",
         "cont_type",
         "reward",
         "rate",
@@ -196,39 +220,34 @@ def opt_header():
         "B_ENPV",
         "O_ENPV",
     ]
-    params.isSim and heads.append("SB_Risk")
-    heads.append("B_Risk")
+    params.isSim and file_heads.append("SB_Risk")
+    file_heads.append("B_Risk")
+    params.isSim and file_heads.append("SO_Risk")
+    file_heads.append("O_Risk")
+    file_heads.append("B_VaR")
+    file_heads.append("O_VaR")
+    params.isSim and file_heads.append("ST_VaR")
+    file_heads.append("T_VaR")
+    file_heads.append("B_CVaR")
+    file_heads.append("O_CVaR")
+    params.isSim and file_heads.append("ST_CVaR")
+    file_heads.append("T_CVaR")
 
-    params.isSim and heads.append("SO_Risk")
-    heads.append("O_Risk")
+    console_heads = [
+        "time",
+        "proj_id",
+        "cont_type",
+        "B_Risk",
+        "O_Risk",
+        "B_VaR",
+        "O_VaR",
+        "T_VaR",
+    ]
 
-    heads.append("B_VaR")
-    heads.append("O_VaR")
-
-    params.isSim and heads.append("ST_VaR")
-    heads.append("T_VaR")
-
-    # Ensure the 'reports' directory exists
-    root_dir = os.path.dirname(
-        os.path.dirname(os.path.dirname(__file__))
-    )  # Go up one level
-    reports_dir = os.path.join(root_dir, "reports")
-    os.makedirs(reports_dir, exist_ok=True)
-
-    file_name = "~opt_report.txt"
-    file_path = os.path.join(reports_dir, file_name)
-
-    log_file: TextIO
-    # check if opt_report file already exists, if so, open it in append mode
-    if os.path.exists(file_path):
-        # open in append mode
-        log_file = open(file_path, "a", buffering=1, encoding="utf-8")
-    else:
-        # create the file_path file and open it in write mode
-        log_file = open(file_path, "w", buffering=1, encoding="utf-8")
-        # print_and_log(log_file, "\n")
-        print_and_log(log_file, "\t".join(f"{x:<10}" for x in heads))
-
+    log_file = _open_opt_log("~opt_var_report.txt")
+    print_console("\t".join(f"{x:<10}" for x in console_heads))
+    if log_file.tell() == 0:
+        log_report(log_file, "\t".join(f"{x:<10}" for x in file_heads))
     return log_file
 
 
@@ -247,31 +266,47 @@ def _build_common_row(proj: Project):
     ]
 
 
-def _build_opt_row(opt: bestContract, rp):
+def _build_opt_var_file_row(opt: bestContract, rp):
     c, b, o = opt.cont, opt.builder, opt.owner
     r = round  # tiny alias
+    sr = lambda x: None if x is None else r(x, rp)
+    tvar, tcvar = _objective_totals(opt)
     row = [
         c.type,
         r(c.reward, 4),
         r(c.rate, 4),
         r(c.salary, 4),
-        r(b.enpv, rp),
-        r(o.enpv, rp),
+        sr(b.enpv),
+        sr(o.enpv),
     ]
 
-    params.isSim and row.append(r(opt.sim_results.builder.risk, rp))
-    row.append(r(b.risk, rp))
+    params.isSim and row.append(sr(opt.sim_results.builder.risk))
+    row.append(sr(b.risk))
 
-    params.isSim and row.append(r(opt.sim_results.owner.risk, rp))
-    row.append(r(o.risk, rp))
+    params.isSim and row.append(sr(opt.sim_results.owner.risk))
+    row.append(sr(o.risk))
 
-    row.append(r(b.var, rp))
-    row.append(r(o.var, rp))
+    row.append(sr(b.var))
+    row.append(sr(o.var))
 
     params.isSim and row.append(
-        r(opt.sim_results.builder.var + opt.sim_results.owner.var, rp)
+        sr(
+            None
+            if opt.sim_results.builder.var is None or opt.sim_results.owner.var is None
+            else opt.sim_results.builder.var + opt.sim_results.owner.var
+        )
     )
-    row.append(r(opt.tvar, rp))
+    row.append(sr(tvar))
+    row.append(sr(b.cvar))
+    row.append(sr(o.cvar))
+    params.isSim and row.append(
+        sr(
+            None
+            if opt.sim_results.builder.cvar is None or opt.sim_results.owner.cvar is None
+            else opt.sim_results.builder.cvar + opt.sim_results.owner.cvar
+        )
+    )
+    row.append(sr(tcvar))
 
     return row
 
@@ -280,20 +315,37 @@ def _fmt_line(values):
     return "\t".join("" if x is None else f"{x:<10}" for x in values)
 
 
-def opt_report(proj: Project, log_file: TextIO):
+def _build_opt_var_console_row(opt: bestContract, rp):
+    b, o = opt.builder, opt.owner
+    r = round
+    sr = lambda x: None if x is None else r(x, rp)
+    tvar, _ = _objective_totals(opt)
+    return [
+        opt.cont.type,
+        sr(b.risk),
+        sr(o.risk),
+        sr(b.var),
+        sr(o.var),
+        sr(tvar),
+    ]
+
+
+def opt_var_report(proj: Project, log_file: TextIO):
     common = _build_common_row(proj)
     rp = params.roundPrecision
 
     for attr in ("lsOpt", "cpOpt", "lhOpt", "tmOpt"):
         opt = getattr(proj, attr)
-        line = _fmt_line(common + _build_opt_row(opt, rp))
-        print_and_log(log_file, line)
+        console_line = _fmt_line(common + _build_opt_var_console_row(opt, rp))
+        file_line = _fmt_line(common + _build_opt_var_file_row(opt, rp))
+        print_console(console_line)
+        log_report(log_file, file_line)
 
     atexit.register(log_file.close)
 
 
 def opt_cvar_header():
-    heads = [
+    file_heads = [
         "time",
         "proj_id",
         "cont_type",
@@ -303,64 +355,95 @@ def opt_cvar_header():
         "B_ENPV",
         "O_ENPV",
     ]
-    params.isSim and heads.append("SB_Risk")
-    heads.append("B_Risk")
+    params.isSim and file_heads.append("SB_Risk")
+    file_heads.append("B_Risk")
+    params.isSim and file_heads.append("SO_Risk")
+    file_heads.append("O_Risk")
+    file_heads.append("B_CVaR")
+    file_heads.append("O_CVaR")
+    params.isSim and file_heads.append("ST_CVaR")
+    file_heads.append("T_CVaR")
+    file_heads.append("B_VaR")
+    file_heads.append("O_VaR")
+    params.isSim and file_heads.append("ST_VaR")
+    file_heads.append("T_VaR")
 
-    params.isSim and heads.append("SO_Risk")
-    heads.append("O_Risk")
+    console_heads = [
+        "time",
+        "proj_id",
+        "cont_type",
+        "B_Risk",
+        "O_Risk",
+        "B_CVaR",
+        "O_CVaR",
+        "T_CVaR",
+    ]
 
-    heads.append("B_CVaR")
-    heads.append("O_CVaR")
-
-    params.isSim and heads.append("ST_CVaR")
-    heads.append("T_CVaR")
-
-    root_dir = os.path.dirname(
-        os.path.dirname(os.path.dirname(__file__))
-    )
-    reports_dir = os.path.join(root_dir, "reports")
-    os.makedirs(reports_dir, exist_ok=True)
-
-    file_name = "~opt_cvar_report.txt"
-    file_path = os.path.join(reports_dir, file_name)
-
-    log_file: TextIO
-    if os.path.exists(file_path):
-        log_file = open(file_path, "a", buffering=1, encoding="utf-8")
-    else:
-        log_file = open(file_path, "w", buffering=1, encoding="utf-8")
-        print_and_log(log_file, "\t".join(f"{x:<10}" for x in heads))
-
+    log_file = _open_opt_log("~opt_cvar_report.txt")
+    print_console("\t".join(f"{x:<10}" for x in console_heads))
+    if log_file.tell() == 0:
+        log_report(log_file, "\t".join(f"{x:<10}" for x in file_heads))
     return log_file
 
 
-def _build_opt_cvar_row(opt: bestContract, rp):
+def _build_opt_cvar_file_row(opt: bestContract, rp):
     c, b, o = opt.cont, opt.builder, opt.owner
     r = round
+    sr = lambda x: None if x is None else r(x, rp)
+    tvar, tcvar = _objective_totals(opt)
     row = [
         c.type,
         r(c.reward, 4),
         r(c.rate, 4),
         r(c.salary, 4),
-        r(b.enpv, rp),
-        r(o.enpv, rp),
+        sr(b.enpv),
+        sr(o.enpv),
     ]
 
-    params.isSim and row.append(r(opt.sim_results.builder.risk, rp))
-    row.append(r(b.risk, rp))
+    params.isSim and row.append(sr(opt.sim_results.builder.risk))
+    row.append(sr(b.risk))
 
-    params.isSim and row.append(r(opt.sim_results.owner.risk, rp))
-    row.append(r(o.risk, rp))
+    params.isSim and row.append(sr(opt.sim_results.owner.risk))
+    row.append(sr(o.risk))
 
-    row.append(r(b.cvar, rp))
-    row.append(r(o.cvar, rp))
+    row.append(sr(b.cvar))
+    row.append(sr(o.cvar))
 
     params.isSim and row.append(
-        r(opt.sim_results.builder.cvar + opt.sim_results.owner.cvar, rp)
+        sr(
+            None
+            if opt.sim_results.builder.cvar is None or opt.sim_results.owner.cvar is None
+            else opt.sim_results.builder.cvar + opt.sim_results.owner.cvar
+        )
     )
-    row.append(r(opt.tcvar, rp))
+    row.append(sr(tcvar))
+    row.append(sr(b.var))
+    row.append(sr(o.var))
+    params.isSim and row.append(
+        sr(
+            None
+            if opt.sim_results.builder.var is None or opt.sim_results.owner.var is None
+            else opt.sim_results.builder.var + opt.sim_results.owner.var
+        )
+    )
+    row.append(sr(tvar))
 
     return row
+
+
+def _build_opt_cvar_console_row(opt: bestContract, rp):
+    b, o = opt.builder, opt.owner
+    r = round
+    sr = lambda x: None if x is None else r(x, rp)
+    _, tcvar = _objective_totals(opt)
+    return [
+        opt.cont.type,
+        sr(b.risk),
+        sr(o.risk),
+        sr(b.cvar),
+        sr(o.cvar),
+        sr(tcvar),
+    ]
 
 
 def opt_cvar_report(proj: Project, log_file: TextIO):
@@ -369,10 +452,22 @@ def opt_cvar_report(proj: Project, log_file: TextIO):
 
     for attr in ("lsOpt", "cpOpt", "lhOpt", "tmOpt"):
         opt = getattr(proj, attr)
-        line = _fmt_line(common + _build_opt_cvar_row(opt, rp))
-        print_and_log(log_file, line)
+        console_line = _fmt_line(common + _build_opt_cvar_console_row(opt, rp))
+        file_line = _fmt_line(common + _build_opt_cvar_file_row(opt, rp))
+        print_console(console_line)
+        log_report(log_file, file_line)
 
     atexit.register(log_file.close)
+
+
+def opt_header():
+    # Backward compatible alias for var optimization report.
+    return opt_var_header()
+
+
+def opt_report(proj: Project, log_file: TextIO):
+    # Backward compatible alias for var optimization report.
+    return opt_var_report(proj, log_file)
 
 
 def sens_header(proj: Project, name: str):

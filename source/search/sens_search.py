@@ -2,7 +2,7 @@ from source.definit.initialize import initialize
 from source.definit.contract import Contract, calc_rate_uni, calc_reward, calc_salary
 from source.definit.project import Project, ExactResults
 from source.evaluate.exact_eval import exact_calculations
-from source.search.opt_search import opt_contract_peakfinder
+from source.search.opt_var_search import opt_contract_peakfinder
 import numpy as np
 from source.definit.param import params
 from source.utility.report_writer import sens_header, sens_report

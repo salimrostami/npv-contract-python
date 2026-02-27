@@ -178,9 +178,10 @@ def opt_cvar_search(proj: Project):
         0,
         calc_cvar=True,
     )
+    proj.lsOpt.tvar = proj.lsOpt.builder.var + proj.lsOpt.owner.var
     proj.lsOpt.tcvar = proj.lsOpt.builder.cvar + proj.lsOpt.owner.cvar
 
-    proj.cpOpt.tcvar, proj.cpOpt.cont = opt_contract(proj, "cp")
+    _, proj.cpOpt.cont = opt_contract(proj, "cp")
     params.isSim and simulate(proj, proj.cpOpt.cont, proj.cpOpt.sim_results, 0)
     exact_calculations(
         proj,
@@ -190,8 +191,10 @@ def opt_cvar_search(proj: Project):
         0,
         calc_cvar=True,
     )
+    proj.cpOpt.tvar = proj.cpOpt.builder.var + proj.cpOpt.owner.var
+    proj.cpOpt.tcvar = proj.cpOpt.builder.cvar + proj.cpOpt.owner.cvar
 
-    proj.lhOpt.tcvar, proj.lhOpt.cont = opt_contract(proj, "lh")
+    _, proj.lhOpt.cont = opt_contract(proj, "lh")
     params.isSim and simulate(proj, proj.lhOpt.cont, proj.lhOpt.sim_results, 0)
     exact_calculations(
         proj,
@@ -201,8 +204,10 @@ def opt_cvar_search(proj: Project):
         0,
         calc_cvar=True,
     )
+    proj.lhOpt.tvar = proj.lhOpt.builder.var + proj.lhOpt.owner.var
+    proj.lhOpt.tcvar = proj.lhOpt.builder.cvar + proj.lhOpt.owner.cvar
 
-    proj.tmOpt.tcvar, proj.tmOpt.cont = opt_contract(proj, "tm")
+    _, proj.tmOpt.cont = opt_contract(proj, "tm")
     params.isSim and simulate(proj, proj.tmOpt.cont, proj.tmOpt.sim_results, 0)
     exact_calculations(
         proj,
@@ -212,5 +217,7 @@ def opt_cvar_search(proj: Project):
         0,
         calc_cvar=True,
     )
+    proj.tmOpt.tvar = proj.tmOpt.builder.var + proj.tmOpt.owner.var
+    proj.tmOpt.tcvar = proj.tmOpt.builder.cvar + proj.tmOpt.owner.cvar
 
     opt_cvar_report(proj, log_file)

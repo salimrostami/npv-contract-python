@@ -1,6 +1,7 @@
 from source.search.full_search import full_search
 from source.definit.project import all_projects, projects
 from time import process_time
+from source.search.opt_var_search import opt_var_search
 from source.search.opt_cvar_search import opt_cvar_search
 from source.definit.param import params
 from source.search.sens_search import tm_sens_rate, tm_sens_salary
@@ -20,7 +21,10 @@ def main():
         debug_sim_contract(proj, 1, 1327.0490291091646, 7500, proj.owner_threshold)
         return
 
-    if params.isOptSearch:
+    if params.isOptVarSearch:
+        for proj in projects:
+            opt_var_search(proj)
+    if params.isOptCVaRSearch:
         for proj in projects:
             opt_cvar_search(proj)
     if params.isTmSense:
