@@ -17,7 +17,7 @@ class Params:
     ePrecision: float = 0.00000001
     roundPrecision: int = 8
     minSafeSalary: int = 50
-    enpvs_factor: int = 1
+    enpvs_factor: int = 0
     "o_enpv = enpvs_factor * b_enpv --- when enpvs_factor = 0, then o_enpv independent of b_enpv"
 
 
