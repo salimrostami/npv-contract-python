@@ -6,11 +6,11 @@ class Params:
     dist: str = "uni"
     simRounds: int = 100000
     isOptVarSearch: bool = False
-    isOptCVaRSearch: bool = False
+    isOptCVaRSearch: bool = True
     isFullSearch: bool = False
     isTmSensRateVar: bool = False
     isTmSensSalaryVar: bool = False
-    isTmSensRateCVaR: bool = True
+    isTmSensRateCVaR: bool = False
     isTmSensSalaryCVaR: bool = False
     isSim: bool = False
     isDebug: bool = False
